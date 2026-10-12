@@ -84,5 +84,5 @@ P = \min\left\{1,\ \exp\left[\left(\frac{1}{kT_i}-\frac{1}{kT_j}\right)\left(U_i
 
 ## Autores
 
-- Lucas Avila Pinheiro
+- Lucas A. Pinheiro
 - Eduard D. S. Mourão
