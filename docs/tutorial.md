@@ -37,13 +37,13 @@ Nos testes da seção 9, os resultados marcados como *observado* foram obtidos e
 
 ## 1. O problema que o REMD resolve
 
-Uma simulação de dinâmica molecular a temperatura T visita os estados do sistema com probabilidade proporcional a exp(−U/kT). Em princípio, uma trajetória longa o bastante visita tudo o que importa. Na prática, as regiões de baixa energia costumam estar separadas por barreiras, e o tempo médio de espera para cruzar uma barreira de altura ΔU‡ cresce exponencialmente:
+Uma simulação de dinâmica molecular a temperatura T visita os estados do sistema com probabilidade proporcional a exp(−U/kT). Em princípio, uma trajetória longa o bastante visita tudo o que importa. Na prática, as regiões de baixa energia costumam estar separadas por barreiras, e o tempo médio de espera para cruzar uma barreira de energia livre de altura ΔG‡ cresce exponencialmente:
 
 ```math
-\tau \propto \exp\left(\frac{\Delta U^{\ddagger}}{kT}\right)
+\tau \propto \exp\left(\frac{\Delta G^{\ddagger}}{kT}\right)
 ```
 
-Quando ΔU‡ é muito maior que kT, a simulação fica presa na bacia onde começou. As médias calculadas convergem, mas para a bacia inicial, não para o ensemble. Esse comportamento é chamado de quasi-ergodicidade. Ele é difícil de detectar, porque a própria simulação não indica que há regiões não visitadas.
+Quando ΔG‡ é muito maior que kT, a simulação fica presa na bacia onde começou. As médias calculadas convergem, mas para a bacia inicial, não para o ensemble. Esse comportamento é chamado de quasi-ergodicidade. Ele é difícil de detectar, porque a própria simulação não indica que há regiões não visitadas.
 
 Aumentar a temperatura resolve a barreira (τ cai exponencialmente), mas então a simulação amostra o ensemble errado: o da temperatura alta. O REMD é uma forma de usar a temperatura alta para cruzar barreiras e, ainda assim, obter o ensemble correto na temperatura baixa.
 
@@ -271,8 +271,8 @@ A janela tem três colunas: controles à esquerda, gráficos no centro e réplic
 
 | Controle | Opções | Função |
 | --- | --- | --- |
-| Teste | "1: referência" a "9: faixa fria" | Preenche os campos com a configuração de um teste da seção 9 (seção 9) |
-| Cores | "Destaque (demais em cinza)" / "Colorido" | Como os walkers são pintados (seção 6.4) |
+| Teste | "1: referência" a "9: faixa fria" | Preenche os campos com a configuração de um teste da seção 9 |
+| Cores | "Destaque" / "Colorido" | Como os walkers são pintados (seção 6.4) |
 | Mapa | "Ocupação" / "Menor energia" / "Taxa de troca (kT)" / "Trocas entre walkers" | Qual mapa aparece no painel inferior direito do centro (seção 6.3) |
 | menor U no random walk | ligado / desligado | Mostra, no random walk, em que kT estava a configuração de menor energia; com a chave ligada, as linhas dos walkers ficam mais claras para destacar esses pontos |
 
@@ -337,7 +337,7 @@ No mapa "Taxa de troca (kT)", só as células vizinhas à diagonal ficam preench
 
 ### 6.4 Cores
 
-- **Destaque (demais em cinza)**: o walker 1 (a configuração que começou no menor kT) é vermelho e os demais são cinza. Serve para seguir uma única configuração pela escada.
+- **Destaque**: o walker 1 (a configuração que começou no menor kT) é vermelho e os demais são cinza. Serve para seguir uma única configuração pela escada.
 - **Colorido**: cada walker tem sua cor. Serve para ver todas as trocas.
 
 No random walk, a linha do walker 1 é sempre mais grossa.
@@ -383,7 +383,7 @@ O que observar, na ordem:
 
 **Passo 6. Explore os mapas.** Com a corrida em andamento ou terminada, troque o menu Mapa entre as quatro opções e leia cada uma com a tabela da seção 6.3.
 
-**Resultado observado nessa configuração**: taxa de troca entre 0,5 e 0,8 em todos os pares, em geral menor no par mais frio, e algumas dezenas de round trips em 20 000 passos (45 em uma das corridas). Os valores mudam com a semente.
+**Resultado observado nessa configuração**: taxa de troca entre 0,6 e 0,8 em todos os pares, em geral menor no par mais frio, e algumas dezenas de round trips em 20 000 passos (45 em uma das corridas). Os valores mudam com a semente.
 
 **Questões**
 
@@ -478,7 +478,7 @@ Define, com n, a densidade n/L². Uma caixa menor aumenta a densidade, torna a e
 
 #### epsilon e sigma
 
-- **epsilon**: o que importa é a razão kT/epsilon. Dobrar epsilon equivale a dividir por dois todas as temperaturas da escada.
+- **epsilon**: o que importa é a razão kT/epsilon. Dobrar epsilon equivale a dividir por dois todas as temperaturas da escada. Como a unidade de tempo depende de epsilon, o mesmo dt equivale a um passo √2 vezes maior em unidades reduzidas, e a integração fica menos estável.
 - **sigma**: define o tamanho das partículas e, com n e L, a fração da caixa ocupada.
 
 Em geral não há motivo para alterar esses dois no tutorial.
@@ -503,7 +503,7 @@ O coeficiente de atrito do termostato de Langevin. O tempo de relaxação da tem
 | Padrão (0,1) | Relaxação em 1/0,1 = 10 unidades de tempo, ou 200 passos com dt = 0,05 |
 | Grande (1 ou mais) | A temperatura se ajusta rápido, mas o movimento fica difusivo e o sistema explora o espaço mais devagar |
 
-No REMD, gamma importa logo depois de uma troca: o walker chega a uma temperatura nova com as velocidades já reescaladas, mas com posições ainda típicas da temperatura anterior. Ele precisa de um tempo da ordem de 1/gamma para relaxar.
+No REMD, gamma controla quanto cada réplica se descorrelaciona entre duas tentativas de troca. Não é preciso reequilibrar depois de uma troca aceita: como o critério satisfaz o balanço detalhado e as velocidades são reescaladas, a configuração recebida já é uma amostra válida do novo kT. Com gamma grande demais, o movimento fica difusivo, a configuração muda pouco entre tentativas e o mesmo par tende a trocar e destrocar.
 
 ### 8.4 Frequência de troca
 
@@ -528,7 +528,7 @@ O campo "pausa se trocou" não altera a simulação; só congela a tela para que
 O botão 1 faz três coisas:
 
 1. **Recria o sistema** com posições sorteadas. Partículas podem estar sobrepostas, com energia enorme.
-2. **Minimiza**: desloca as partículas na direção das forças, em passos pequenos, até remover as sobreposições. Sem isso, o primeiro passo de dinâmica explodiria.
+2. **Minimiza**: desloca as partículas na direção das forças, em passos de no máximo 0,05, por 500 iterações, o suficiente para remover as sobreposições. Sem isso, o primeiro passo de dinâmica explodiria.
 3. **Equilibra**: copia a configuração minimizada para todas as réplicas, sorteia velocidades na temperatura de cada uma e roda a dinâmica **sem trocas** pelo número de passos do campo "equilibração".
 
 Por que equilibrar sem trocas: todas as réplicas partem da mesma configuração, então no início nenhuma está em equilíbrio com seu kT. Se as trocas começassem imediatamente, as primeiras refletiriam essa relaxação e não o comportamento da escada.
@@ -752,7 +752,7 @@ Os parâmetros da GUI têm equivalentes diretos em pacotes de dinâmica molecula
 
 **O custo do solvente.** Pelo argumento da seção 8.1, o número de réplicas cresce com √n, e n inclui todos os átomos. Num peptídeo solvatado, a maior parte dos átomos é água, e é ela que limita o espaçamento entre temperaturas. Por isso o T-REMD em solvente explícito exige muitas réplicas mesmo para solutos pequenos.
 
-**A saída: REST2.** No *Replica Exchange with Solute Tempering* (Wang, Friesner e Berne, 2011), todas as réplicas ficam na mesma temperatura, e o que varia é o Hamiltoniano: só as interações do soluto são escaladas, como se apenas ele fosse aquecido. A diferença de energia entre réplicas passa a vir só dos átomos do soluto, e poucas réplicas bastam. Os conceitos deste tutorial (sobreposição, taxa de troca, round trips, gargalo, topo quente o bastante) valem igualmente; muda apenas o que é a "escada".
+**A saída: REST2.** No *Replica Exchange with Solute Tempering* (Wang, Friesner e Berne, 2011), todas as réplicas ficam na mesma temperatura, e o que varia é o Hamiltoniano: só as interações do soluto são escaladas, como se apenas ele fosse aquecido. No critério de troca, os termos água-água se cancelam e só entram os termos que envolvem o soluto; por isso poucas réplicas bastam. Os conceitos deste tutorial (sobreposição, taxa de troca, round trips, gargalo, topo quente o bastante) valem igualmente; muda apenas o que é a "escada".
 
 **Outros cuidados em simulações reais**
 
