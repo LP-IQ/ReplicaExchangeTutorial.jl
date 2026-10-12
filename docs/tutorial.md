@@ -194,7 +194,7 @@ As réplicas são independentes entre uma tentativa de troca e a seguinte, e a G
 
 - Julia instalado. Baixe em https://julialang.org/downloads/ ou use o `juliaup`.
 - Suporte a OpenGL 3.3 (exigência do pacote gráfico GLMakie). Qualquer computador com placa de vídeo dos últimos anos atende.
-- Testado em Ubuntu 20.04.
+- Testado em Ubuntu 20.04. Para Windows, veja a seção 5.5.
 
 ### 5.2 Baixar
 
@@ -228,6 +228,29 @@ remd_gui()
 ```
 
 Se a janela abrir mostrando os painéis com as partículas espalhadas, a instalação está correta.
+
+### 5.5 Windows
+
+O código é o mesmo; mudam só a instalação e a forma de abrir.
+
+1. **Julia.** Instale pelo instalador de https://julialang.org/downloads/ ou, no PowerShell, com `winget install --name Julia --id 9NJNWW8PVKMN -e -s msstore` (instala o `juliaup`). Feche e reabra o terminal e confira com `julia --version`.
+2. **Repositório.** Com o Git for Windows: `git clone https://github.com/LP-IQ/remd-tutorial.git`. Sem Git: no GitHub, botão **Code → Download ZIP**, e extraia a pasta.
+3. **GLMakie (uma vez).** Abra o Julia (menu Iniciar ou `julia` no terminal) e digite:
+
+   ```julia
+   using Pkg; Pkg.add("GLMakie")
+   ```
+
+   No Windows, o comando `julia -e '…'` da seção 5.3 depende do terminal por causa das aspas; o REPL evita esse problema.
+4. **Abrir a GUI.** Dê duplo clique em `run_windows.bat`, na pasta do repositório. Ele roda `julia -t auto remd_gui.jl` na pasta certa e mantém a janela do terminal aberta para mostrar mensagens de erro. Alternativa no PowerShell, dentro da pasta: `julia -t auto remd_gui.jl`. Alternativa no REPL:
+
+   ```julia
+   cd("C:/Users/SEU_USUARIO/remd-tutorial")   # use / ou \\ no caminho
+   include("remd_gui.jl")
+   remd_gui()
+   ```
+
+As figuras e trajetórias são salvas na pasta de onde o Julia foi iniciado; com o `run_windows.bat`, é a pasta do repositório. Para abrir a trajetória no VMD, veja a seção 12.2.
 
 ## 6. Visita guiada à janela
 
@@ -800,6 +823,8 @@ Para visualizar:
 vmd -e remd_traj_….tcl
 ```
 
+No Windows, o VMD normalmente é aberto pelo menu Iniciar. Nesse caso, abra **Extensions → Tk Console** e digite `source C:/caminho/remd_traj_….tcl` (o rodapé da GUI mostra o comando completo). O `.tcl` usa o caminho absoluto do `.xyz`, então funciona de qualquer pasta.
+
 Abrir o `.xyz` diretamente também funciona; nesse caso, em Graphics → Representations, troque o Drawing Method para VDW.
 
 **Como interpretar a trajetória.** Ela é contínua no **estado**: mostra sempre o que estava em kT mín. A cada troca aceita no par mais frio, as posições saltam, porque outra configuração assumiu o lugar. Esses saltos são esperados. As médias calculadas sobre essa trajetória são médias canônicas em kT mín.
@@ -810,6 +835,8 @@ Reset ou uma nova equilibração apagam os frames acumulados. O limite é de 50 
 
 | Problema | Causa e solução |
 | --- | --- |
+| Windows: "julia" não é reconhecido como comando | O Julia não está no PATH. Reabra o terminal depois de instalar; com o instalador de julialang.org, marque a opção "Add Julia to PATH" |
+| Windows: a janela da GUI não abre (erro de OpenGL) | O GLMakie exige OpenGL 3.3. Atualize o driver da placa de vídeo; em área de trabalho remota ou máquina virtual pode não haver suporte |
 | A janela demora muito a abrir na primeira vez | Normal: o Julia está compilando o GLMakie. As próximas aberturas são mais rápidas |
 | Mudei kTs (ou n, L) e nada mudou | Esses campos só valem depois de Reset ou do botão 1 |
 | Digitei um valor e ele não foi aceito | Pressione Enter depois de digitar. Use ponto como separador decimal |

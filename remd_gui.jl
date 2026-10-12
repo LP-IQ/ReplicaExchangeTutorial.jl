@@ -3,6 +3,7 @@
 #
 # Instalação (uma vez):   julia -e 'using Pkg; Pkg.add("GLMakie")'
 # Execução:               julia -t auto remd_gui.jl
+#   Windows:              duplo clique em run_windows.bat
 #   ou, no REPL:          include("remd_gui.jl"); remd_gui()
 #
 # Unidades reduzidas: massa = 1, energia em unidades de epsilon (poço de Lennard-Jones), temperatura como kT.
@@ -760,8 +761,9 @@ function remd_gui()   # se ainda cortar: redimensione a janela ou edite o tamanh
             end
             # script do VMD: sem ligações automáticas, esferas de diâmetro ~sig, caixa periódica, vista ortográfica
             tcl = replace(fn, r"\.xyz$" => ".tcl")
+            xyzpath = replace(abspath(fn), '\\' => '/')   # caminho absoluto com '/': o VMD no Windows abre em outra pasta
             open(tcl, "w") do io
-                println(io, "mol new {$fn} type xyz autobonds off waitfor all")
+                println(io, "mol new {$xyzpath} type xyz autobonds off waitfor all")
                 println(io, "mol delrep 0 top")
                 println(io, "mol representation VDW $(round(s.sig / 2 / 1.0, digits=3)) 20")   # raio = sig/2 (H: 1.0 A)
                 println(io, "mol color ColorID 1")
@@ -771,7 +773,7 @@ function remd_gui()   # se ainda cortar: redimensione a janela ou edite o tamanh
                 println(io, "display projection Orthographic")
                 println(io, "display resetview")
             end
-            logtext[] = "Trajetória salva (.xyz + .tcl, $(length(traj)) frames) em $(pwd()). Abrir com: vmd -e " * tcl
+            logtext[] = "Trajetória salva (.xyz + .tcl, $(length(traj)) frames) em $(pwd()). Abrir com: vmd -e " * tcl * " (Windows: Tk Console do VMD, source " * replace(abspath(tcl), '\\' => '/') * ")"
         catch err
             logtext[] = "ERRO ao salvar: " * sprint(showerror, err)
         end

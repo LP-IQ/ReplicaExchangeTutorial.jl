@@ -10,6 +10,7 @@ A ferramenta do tutorial é uma interface gráfica interativa em Julia (`remd_gu
 | --- | --- |
 | [docs/tutorial.md](docs/tutorial.md) | O tutorial completo: teoria, instalação, visita guiada à GUI, nove testes passo a passo, diagnóstico e relação com simulações moleculares |
 | `remd_gui.jl` | A GUI usada nos testes |
+| `run_windows.bat` | Atalho para abrir a GUI no Windows |
 
 ## Como seguir o tutorial
 
@@ -34,7 +35,7 @@ A ferramenta do tutorial é uma interface gráfica interativa em Julia (`remd_gu
 
 ## Instalação
 
-Requer [Julia](https://julialang.org/downloads/) e suporte a OpenGL 3.3 (exigência do GLMakie). Testado em Ubuntu 20.04.
+Requer [Julia](https://julialang.org/downloads/) e suporte a OpenGL 3.3 (exigência do GLMakie). Testado em Ubuntu 20.04; para Windows, veja a seção [Windows](#windows).
 
 ```bash
 git clone https://github.com/LP-IQ/remd-tutorial.git
@@ -49,6 +50,15 @@ julia -t auto remd_gui.jl
 ```
 
 `-t auto` usa uma thread por núcleo; cada réplica é propagada numa thread. A primeira execução é mais lenta, porque o Julia compila o GLMakie.
+
+### Windows
+
+1. Instale o Julia ([julialang.org/downloads](https://julialang.org/downloads/) ou `winget install --name Julia --id 9NJNWW8PVKMN -e -s msstore`).
+2. Baixe o repositório (`git clone` ou **Code → Download ZIP**).
+3. Abra o Julia e rode `using Pkg; Pkg.add("GLMakie")`.
+4. Dê duplo clique em `run_windows.bat`.
+
+Detalhes e problemas comuns na seção 5.5 do [tutorial](docs/tutorial.md).
 
 No REPL:
 
@@ -84,5 +94,5 @@ P = \min\left\{1,\ \exp\left[\left(\frac{1}{kT_i}-\frac{1}{kT_j}\right)\left(U_i
 
 ## Autores
 
-- Lucas A. Pinheiro
+- Lucas Avila Pinheiro
 - Eduard D. S. Mourão
