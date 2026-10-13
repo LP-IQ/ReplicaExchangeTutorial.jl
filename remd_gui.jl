@@ -299,12 +299,12 @@ function remd_gui()   # se ainda cortar: redimensione a janela ou edite o tamanh
     rowgap!(left, 4)
 
     # ---------------- centro: random walk, energia, histogramas, réplica de referência e mapa ----------------
-    ax_W = Axis(center[1, 1:2]; title="Random walk das configurações", xlabel="rodada de tentativas de troca", ylabel="índice do kT (1 = mais fria)")
+    ax_W = Axis(center[1, 1:2]; title="Random walk das configurações", xlabel="rodada de tentativas de troca", ylabel="índice do kT (1 = menor)")
     ax_E = Axis(center[2, 1]; title="Energia potencial por réplica (média móvel)", xlabel="passo (< 0 = equilibração)", ylabel="U (unidades de epsilon)")
     ax_H = Axis(center[2, 2]; title="P(U) por réplica (azul = menor kT, vermelho = maior kT)", xlabel="U (unidades de epsilon)", ylabel="P(U)")
     ax_main = Axis(center[3, 1]; aspect=DataAspect(), title="Réplica de referência (menor kT)", xticklabelsvisible=false, yticklabelsvisible=false)
     g_O = center[3, 2] = GridLayout()
-    ax_O = Axis(g_O[1, 1]; aspect=DataAspect(), title="Ocupação", xlabel="índice do kT (1 = mais fria)", ylabel="walker")
+    ax_O = Axis(g_O[1, 1]; aspect=DataAspect(), title="Ocupação", xlabel="índice do kT (1 = menor)", ylabel="walker")
     rowsize!(center, 1, Relative(0.27)); rowsize!(center, 2, Relative(0.27))
 
     # gráficos ligados a Observables: mudou o valor (obs[] = ...) -> redesenha
@@ -402,7 +402,7 @@ function remd_gui()   # se ainda cortar: redimensione a janela ou edite o tamanh
                 end
             end
             hm.colorrange = (0.0, 2.0 / R)
-            ax_O.xlabel = "índice do kT (1 = mais fria)"; ax_O.ylabel = "walker"
+            ax_O.xlabel = "índice do kT (1 = menor)"; ax_O.ylabel = "walker"
             ax_O.title = @sprintf("Ocupação: fração do tempo de cada walker em cada kT (ideal = %.2f)", 1 / R)
         elseif map_mode[] == "Menor energia"
             # m[estado, walker] = fração dos registros em que a configuração de MENOR U estava naquele kT e era aquele walker
@@ -414,7 +414,7 @@ function remd_gui()   # se ainda cortar: redimensione a janela ou edite o tamanh
             end
             pk = [sum(@view minU_count[k, 1:R]) / tot for k in 1:R]
             hm.colorrange = (0.0, max(mx, 1e-3))
-            ax_O.xlabel = "índice do kT (1 = mais fria)"; ax_O.ylabel = "walker"
+            ax_O.xlabel = "índice do kT (1 = menor)"; ax_O.ylabel = "walker"
             ax_O.title = "Onde está a configuração de menor U?\nP por kT: " * join([@sprintf("%.2f", q) for q in pk], "  ")
         elseif map_mode[] == "Taxa de troca (kT)"
             # m[i, j] = P_acc = aceitas/tentadas entre os estados kT_i e kT_j (só vizinhos tentam trocar)
@@ -426,7 +426,7 @@ function remd_gui()   # se ainda cortar: redimensione a janela ou edite o tamanh
                 txt[(i - 1) * MAXREP + i + 1] = @sprintf("%.2f", f)   # célula (i+1, i)
             end
             hm.colorrange = (0.0, 1.0)
-            ax_O.xlabel = "índice do kT (1 = mais fria)"; ax_O.ylabel = "índice do kT"
+            ax_O.xlabel = "índice do kT (1 = menor)"; ax_O.ylabel = "índice do kT"
             ax_O.title = "Taxa de troca: P_acc = aceitas/tentadas por par de kT (alvo 0.2-0.3)"
         else
             # m[a, b] = fração de TODAS as trocas aceitas que foram entre os walkers a e b (simétrico)
@@ -741,9 +741,10 @@ function remd_gui()   # se ainda cortar: redimensione a janela ou edite o tamanh
             x0 = min(x0, bb.origin[1] - pr.left - pad);   x1 = max(x1, bb.origin[1] + bb.widths[1] + pr.right + pad)
             y0 = min(y0, bb.origin[2] - pr.bottom - pad); y1 = max(y1, bb.origin[2] + bb.widths[2] + pr.top + pad)
         end
-        cols = clamp(floor(Int, x0 * sc) + 1, 1, W):clamp(ceil(Int, x1 * sc), 1, W)
-        rows = clamp(H - ceil(Int, y1 * sc) + 1, 1, H):clamp(H - floor(Int, y0 * sc), 1, H)   # linha 1 = topo
-        save(fn, img[rows, cols])
+        # não usar 'cols' aqui: sobrescreveria a variável da interface
+        icol = clamp(floor(Int, x0 * sc) + 1, 1, W):clamp(ceil(Int, x1 * sc), 1, W)
+        irow = clamp(H - ceil(Int, y1 * sc) + 1, 1, H):clamp(H - floor(Int, y0 * sc), 1, H)   # linha 1 = topo
+        save(fn, img[irow, icol])
         return nothing
     end
 
