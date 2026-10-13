@@ -12,7 +12,7 @@ Os tópicos são:
 
 Pré-requisitos: noções de dinâmica molecular (integração, termostato, energia potencial) e do ensemble canônico. Não é preciso conhecer Julia.
 
-Nos testes da seção 9, os resultados marcados como *observado* foram obtidos em corridas com a GUI. Os marcados como *esperado* são previsões que devem ser conferidas; os valores numéricos variam com a semente e com a duração da corrida.
+Na seção 9, os testes 1, 2 (com 2 réplicas), 8 e 9 foram rodados na GUI (semente 42, 20 000 passos) e têm os resultados marcados como *observado*, com as figuras salvas pela própria interface. Nos demais, os resultados marcados como *esperado* são previsões que devem ser conferidas. Os valores numéricos variam com a semente e com a duração da corrida.
 
 ## Sumário
 
@@ -391,7 +391,7 @@ Se tiver alterado algum desses campos, refaça-os e clique em **Gerar escada geo
 O que observar:
 - O rodapé mostra "Minimizando..." e depois "Equilibrando cada réplica no seu kT (sem trocas)...".
 - Todos os painéis da direita partem da mesma configuração e vão se diferenciando.
-- No gráfico de energia, as curvas aparecem em passos negativos e vão se separando: a azul (menor kT) desce mais, a vermelha fica mais alta.
+- No gráfico de energia, as curvas aparecem em passos negativos. Elas partem de valores próximos (a configuração minimizada) e se separam: a vermelha (maior kT) sobe mais, a azul (menor kT) fica mais baixa.
 - Ao fim, o rodapé diz "Equilibração concluída. Clique em '2. Run'."
 
 **Passo 5. Rode.** Clique em **2. Run**.
@@ -626,11 +626,29 @@ A configuração de menor energia esteve no menor kT em 52 % do tempo, no segund
 
 **Esperado com 3 réplicas**: histogramas P(U) de vizinhos menos sobrepostos e taxa de troca menor em todos os pares.
 
-**Observado com 2 réplicas**: os dois histogramas ficam bem separados e só se cruzam numa faixa estreita de energia; o random walk mostra longos trechos sem troca, intercalados com sequências curtas de trocas.
+**Observado com 2 réplicas** (preset "2b: 2 réplicas", semente 42, 20 000 passos): a diferença entre as duas temperaturas é de 56 % (contra 9 % no teste 1).
+
+- Taxa de troca 0,04 (8 trocas aceitas em 200 tentativas); 7 round trips.
+- Os dois histogramas ficam bem separados: o de kT = 0,55 vai de cerca de −47 a −15, o de kT = 0,86 de −20 a −5. Eles só se cruzam entre −22 e −17.
+- O random walk tem trechos de quase 150 rodadas sem nenhuma troca. As poucas trocas vêm em sequências curtas: quando uma flutuação leva as duas energias para a faixa comum, a troca é aceita e a troca de volta também tende a ser.
+- Nos painéis da direita, com U = −26 em kT = 0,55 e U = −8 em kT = 0,86, a probabilidade calculada é P ≈ 10⁻⁵, mostrada como 0,00.
+- A configuração de menor energia ficou em kT = 0,55 em 98 % do tempo (52 % no teste 1).
+
+![Janela ao fim do teste 2b](figs/teste2_janela.png)
 
 ![P(U) com 2 réplicas](figs/teste2_P_U_2replicas.png)
 
 ![Random walk com 2 réplicas](figs/teste2_random_walk_2replicas.png)
+
+| Painéis das réplicas | Ocupação |
+| --- | --- |
+| ![Painéis com P(->) = 0,00](figs/teste2_replicas.png) | ![Mapa de ocupação com 2 réplicas](figs/teste2_mapa_ocupacao.png) |
+
+**Cuidado com a ocupação**: ela deu 0,57 / 0,43, perto do ideal de 0,50, mas com apenas 8 trocas esse número tem pouca estatística. A ocupação sozinha não diz se a escada funciona; olhe junto a taxa de troca e o random walk. O mapa "Trocas entre walkers" não informa nada com 2 réplicas, porque só há um par de walkers.
+
+**Energia média em kT = 0,55**: −28,8 aqui, contra −23,2 no teste 1. Num ensemble convergido as duas seriam iguais. A diferença mostra que a energia na temperatura mais fria tem flutuações grandes e lentas (aglomerados que se formam e se desfazem), e que 20 000 passos não bastam para convergir essa média, principalmente quando quase não há trocas.
+
+![Energia com 2 réplicas](figs/teste2_energia.png)
 
 **Pergunta**: qual número de réplicas coloca a taxa de troca perto de 0,2 a 0,3 nessa faixa?
 
@@ -701,33 +719,65 @@ A configuração de menor energia esteve no menor kT em 52 % do tempo, no segund
 
 ### Teste 8: gargalo no meio da escada
 
-**Objetivo**: reconhecer um gargalo pelos mapas.
+**Objetivo**: ver o efeito de uma escada desigual e reconhecer um gargalo pelos mapas.
 
-**Configuração**: digite no campo kTs a lista `0.55,0.58,0.61,0.80,0.83,0.86` e clique no botão 1.
+**Configuração**: digite no campo kTs a lista `0.55,0.58,0.61,0.80,0.83,0.86` e clique no botão 1. São três temperaturas próximas embaixo, três em cima e um salto de 31 % no meio (contra 4 a 5 % nos outros pares).
 
-**Esperado**
-- Taxa de troca alta nos pares 1-2, 2-3, 4-5 e 5-6, e baixa no par 3-4.
-- Random walk: os walkers formam dois grupos que raramente trocam entre si.
-- Mapa "Ocupação": dois blocos.
-- Mapa "Trocas entre walkers": dois blocos de trocas frequentes, com poucas trocas entre os blocos.
-- Poucos round trips.
+**Observado** (preset "8: gargalo", semente 42, 20 000 passos)
+- Taxas de troca: 0,76 / 0,77 / **0,29** / 0,92 / 0,91. O par do salto caiu, mas continua na faixa de 0,2 a 0,3.
+- 28 round trips (45 no teste 1).
+- Mapa "Trocas entre walkers": quase uniforme (0,05 a 0,09), sem blocos.
+- Mapa "Ocupação": começa a separar os walkers. Os walkers 3 e 5 passaram mais tempo no frio (0,23 e 0,28 em kT = 0,55); os walkers 1, 2 e 6, mais no quente.
+- P(U): as três curvas frias e as três quentes formam dois grupos, mas a de kT = 0,61 ainda encosta na de kT = 0,80.
 
-Se o par 3-4 ainda trocar bastante, aumente o buraco (por exemplo, 0.55, 0.57, 0.59, 0.95, 0.98, 1.01).
+![Janela ao fim do teste 8](figs/teste8_janela.png)
 
-**Conclusão**: a taxa de troca média pode parecer boa enquanto um único par impede a circulação. Olhe sempre o par pior e os round trips.
+| Taxa de troca | Ocupação | Trocas entre walkers |
+| --- | --- | --- |
+| ![Taxa de troca no teste 8](figs/teste8_mapa_taxa_de_troca.png) | ![Ocupação no teste 8](figs/teste8_mapa_ocupacao.png) | ![Trocas entre walkers no teste 8](figs/teste8_mapa_trocas_walkers.png) |
 
-### Teste 9: o topo da escada é quente o bastante?
+![Random walk no teste 8](figs/teste8_random_walk.png)
 
-**Objetivo**: ver que boa circulação não basta.
+**Interpretação**: o salto não chegou a formar um gargalo completo, porque as distribuições de energia nessa faixa ainda se sobrepõem. O resultado é uma escada desequilibrada: os pares de cima trocam mais de 90 % das vezes, o que desperdiça réplicas, e o par do meio estreita o caminho e reduz os round trips. Com as mesmas seis réplicas, uma escada geométrica circularia melhor.
 
-**Configuração**: réplicas 6, kT mín 0.35, kT máx 0.45 (faixa estreita e fria). Aumente a equilibração para 5000.
+**Para ver um gargalo completo**, aumente o salto: `0.55,0.57,0.59,0.95,0.98,1.01` (61 % entre 0,59 e 0,95, parecido com o teste 2b). Espera-se taxa perto de zero no par 3-4, dois blocos nos mapas e quase nenhum round trip. Com kT = 1,01, confira se a energia do painel mais quente não dispara; se disparar, reduza dt.
 
-**Esperado**
-- Taxa de troca alta e muitos round trips: todos os indicadores de circulação parecem ótimos.
-- Mas no painel do maior kT os aglomerados persistem: o topo não é quente o bastante para desfazê-los.
-- As configurações que chegam à réplica de referência são parecidas com as que já estavam lá.
+**Conclusão**: o que importa é a taxa ser parecida em todos os pares. Olhe sempre o par pior e os round trips, não a média.
 
-**Conclusão**: a avaliação tem duas etapas. A primeira é verificar se as configurações circulam pela escada. A segunda é verificar se a temperatura máxima é suficiente para descorrelacionar o grau de liberdade lento. A taxa de troca e os round trips respondem apenas à primeira.
+### Teste 9: uma faixa fria que atravessa uma transição
+
+**Objetivo**: ver o que acontece quando a escada atravessa uma transição de fase, e por que o equilíbrio é a primeira coisa a verificar.
+
+**Configuração**: réplicas 6, kT mín 0.35, kT máx 0.45 (faixa estreita e fria), equilibração 5000.
+
+A previsão inicial era de circulação boa com um topo frio demais. O resultado foi outro, e mais instrutivo.
+
+**Observado** (preset "9: faixa fria", semente 42, 20 000 passos)
+- Nessa faixa o sistema passa por uma condensação. Abaixo de kT ≈ 0,38 as partículas formam aglomerados grandes (U = −164 em kT = 0,35); acima de ~0,41 o sistema é um gás (U ≈ −40).
+- A energia das réplicas frias cai durante toda a corrida, de cerca de −20 até −170, sem estabilizar: os aglomerados continuam crescendo e se juntando.
+- Taxas de troca: 0,27 / **0,03** / 0,51 / 0,33 / 0,55. O par 0,37–0,39, bem na transição, quase não troca.
+- Nenhum round trip. Ocupação e trocas entre walkers em dois blocos: os walkers 1 e 2 ficam nas duas temperaturas mais frias, e os walkers 3 a 6 nas quatro mais quentes.
+- As P(U) frias são largas e com vários picos, porque a energia está derivando.
+
+![Janela ao fim do teste 9](figs/teste9_janela.png)
+
+| Painéis das réplicas | Energia |
+| --- | --- |
+| ![Aglomerados nas réplicas frias](figs/teste9_replicas.png) | ![Energia derivando nas réplicas frias](figs/teste9_energia.png) |
+
+| Taxa de troca | Ocupação | Trocas entre walkers |
+| --- | --- | --- |
+| ![Taxa de troca no teste 9](figs/teste9_mapa_taxa_de_troca.png) | ![Ocupação no teste 9](figs/teste9_mapa_ocupacao.png) | ![Trocas entre walkers no teste 9](figs/teste9_mapa_trocas_walkers.png) |
+
+![P(U) no teste 9](figs/teste9_P_U.png)
+
+**Interpretação**
+1. **O sistema não equilibrou.** Com a energia caindo o tempo todo, nenhuma média desta corrida é válida. Essa é a etapa 1 do diagnóstico (seção 10), e ela falha antes de qualquer outra.
+2. **A transição cria um gargalo.** Na transição, a energia muda muito com a temperatura: a capacidade calorífica tem um pico. As distribuições de energia vizinhas se afastam, e a escada geométrica, que supõe capacidade calorífica constante, deixa ali um par que quase não troca. O mesmo acontece com proteínas perto da temperatura de enovelamento; métodos como o de Katzgraber et al. (2006) concentram réplicas nessa região.
+
+**Conclusão**: antes de avaliar as trocas, verifique se o sistema equilibrou. E numa transição de fase as temperaturas precisam ficar mais próximas do que a escada geométrica indica.
+
+**A previsão original** (circulação boa com topo frio demais) exigiria uma faixa toda abaixo da transição, em que todas as réplicas têm aglomerados. Nessa região o equilíbrio é lento, e o resultado depende muito da duração da corrida. A ideia continua valendo em geral: taxa de troca e round trips dizem se as configurações circulam, mas não se a temperatura máxima cruza a barreira que importa.
 
 ## 10. Diagnóstico: do sintoma ao parâmetro
 
@@ -738,6 +788,7 @@ As tabelas abaixo relacionam cada sintoma ao parâmetro que deve ser alterado. A
 | Sintoma | Onde aparece | O que variar |
 | --- | --- | --- |
 | Curvas de energia ainda derivando no passo 0 | Gráfico de energia, parte negativa | Aumentar a equilibração |
+| Energia de uma réplica caindo durante toda a corrida | Gráfico de energia, parte positiva (teste 9) | O sistema não equilibrou: equilibrar e rodar por muito mais tempo; as médias desta corrida não valem |
 | Taxa de troca muda muito no início da corrida | Texto de estatísticas | Mesmo; descartar o início |
 
 **Etapa 2: as configurações circulam pela escada?**
@@ -746,7 +797,8 @@ As tabelas abaixo relacionam cada sintoma ao parâmetro que deve ser alterado. A
 | --- | --- | --- | --- |
 | Taxa de troca perto de zero em um par | Texto de estatísticas; mapa "Taxa de troca (kT)"; histogramas P(U) separados | Vizinhos distantes demais | Adicionar uma réplica nesse intervalo ou aproximar os kTs |
 | Taxa de troca acima de 0,5 em todos os pares | Mesmos lugares; P(U) quase coincidentes | Réplicas sobrando | Remover réplicas ou aumentar kT máx |
-| Taxa de troca desigual entre pares | Mapa "Taxa de troca (kT)" | Capacidade calorífica varia na escada | Editar kTs: aproximar onde a taxa é baixa |
+| Taxa de troca desigual entre pares | Mapa "Taxa de troca (kT)" | Capacidade calorífica varia na escada, ou espaçamento desigual (teste 8) | Editar kTs: aproximar onde a taxa é baixa |
+| Um par quase não troca no meio de uma faixa estreita | Mapa "Taxa de troca (kT)"; P(U) largas ou com vários picos (teste 9) | Transição de fase: pico de capacidade calorífica | Aproximar as temperaturas na região da transição |
 | Walkers em grupos isolados | Mapa "Trocas entre walkers" e "Ocupação" em blocos; random walk em faixas | Gargalo em um par | Corrigir esse par (primeira linha) |
 | Poucos round trips com taxa de troca razoável | Contador de round trips; random walk lento | Poucas tentativas, ou réplicas demais para percorrer | Diminuir "troca a cada"; rodar mais; reduzir réplicas se a taxa permitir |
 | Round trips muito desiguais entre walkers | "por walker" no texto de estatísticas | Corrida curta, ou um walker preso | Rodar mais; conferir equilibração |
