@@ -43,19 +43,19 @@ Uma simulação de dinâmica molecular a temperatura T visita os estados do sist
 \tau \propto \exp\left(\frac{\Delta G^{\ddagger}}{kT}\right)
 ```
 
-Quando ΔG‡ é muito maior que kT, a simulação fica presa na bacia onde começou. As médias calculadas convergem, mas para a bacia inicial, não para o ensemble. Esse comportamento é chamado de quasi-ergodicidade. Ele é difícil de detectar, porque a própria simulação não indica que há regiões não visitadas.
+Quando ΔG‡ é muito maior que kT, a simulação fica presa no mínimo local de energia livre (o estado metaestável) onde começou. As médias calculadas convergem, mas para as propriedades desse mínimo, não para as do ensemble. Esse comportamento é chamado de quasi-ergodicidade. Ele é difícil de detectar, porque a própria simulação não indica que há regiões não visitadas.
 
 Aumentar a temperatura resolve a barreira (τ cai exponencialmente), mas então a simulação amostra o ensemble errado: o da temperatura alta. O REMD é uma forma de usar a temperatura alta para cruzar barreiras e, ainda assim, obter o ensemble correto na temperatura baixa.
 
 ## 2. A ideia do método
 
-Simulam-se R cópias do mesmo sistema, chamadas **réplicas**, cada uma numa temperatura diferente: T₁ < T₂ < … < T_R. O conjunto das temperaturas é a **escada**.
+Simulam-se R cópias do mesmo sistema, chamadas **réplicas**, cada uma numa temperatura diferente: T₁ < T₂ < … < T_R. O conjunto das temperaturas é a **escada** (em inglês, *temperature ladder*).
 
 - A réplica em T₁ é a de interesse (a **réplica de referência**).
 - As réplicas em temperaturas altas cruzam barreiras com facilidade.
-- De tempos em tempos, duas réplicas de temperaturas vizinhas tentam **trocar de configuração**. Se a troca é aceita, a configuração que estava em T₂ passa a evoluir em T₁, e vice-versa.
+- De tempos em tempos, duas réplicas de temperaturas vizinhas tentam **trocar de configuração**. Se a troca é aceita, a configuração que estava em T₂ passa a ser simulada em T₁, e vice-versa.
 
-Com isso, uma configuração que cruzou uma barreira lá em cima pode descer a escada, degrau por degrau, até chegar a T₁. A réplica de referência recebe configurações de bacias que ela nunca alcançaria sozinha.
+Com isso, uma configuração que cruzou uma barreira lá em cima pode descer a escada, degrau por degrau, até chegar a T₁. A réplica de referência recebe configurações de mínimos locais que ela nunca alcançaria sozinha.
 
 **Estado e walker**
 
@@ -64,7 +64,7 @@ Com isso, uma configuração que cruzou uma barreira lá em cima pode descer a e
 | **Estado** | Uma temperatura da escada. É fixo. | Cada painel da direita; o kT no título nunca muda |
 | **Walker** (configuração) | Um conjunto de posições e velocidades que passeia pela escada | A cor das partículas |
 
-Quando uma troca é aceita, os dois walkers trocam de painel. As temperaturas dos painéis não mudam; o que muda é a configuração que está em cada uma. É importante manter essa distinção, porque as análises podem ser feitas por estado (o que interessa para as médias) ou por walker (o que interessa para avaliar a mistura).
+Quando uma troca é aceita, os dois walkers trocam de painel. As temperaturas dos painéis não mudam; o que muda é a configuração que está em cada uma. É importante manter essa distinção, porque as análises podem ser feitas por estado (o que interessa para as médias) ou por walker (o que interessa para avaliar a **circulação** das configurações pela escada, chamada em inglês de *replica mixing*).
 
 **O que o método garante**
 
@@ -106,7 +106,7 @@ A razão entre os dois é
 \frac{w_{\text{depois}}}{w_{\text{antes}}} = \exp\left[\left(\beta_i - \beta_j\right)\left(U_i - U_j\right)\right]
 ```
 
-Aceitar a troca com probabilidade min{1, razão} é a regra de Metropolis. Ela satisfaz o **balanço detalhado** no espaço estendido, e por isso cada estado continua canônico.
+Aceitar a troca com probabilidade min{1, razão} é a regra de Metropolis. Ela satisfaz o **balanço detalhado** (*detailed balance*, a reversibilidade microscópica) no ensemble estendido: no equilíbrio, cada troca acontece com a mesma frequência que a troca inversa. Um processo com essa propriedade não altera a distribuição de equilíbrio, e por isso cada estado continua canônico.
 
 ### 3.3 Como ler a fórmula
 
@@ -336,7 +336,7 @@ Um dos painéis tem **moldura magenta grossa**: é o estado que contém, naquele
 
 ### 6.3 Coluna central: os gráficos
 
-**Random walk das configurações** (topo). Eixo x: número da rodada de tentativas de troca. Eixo y: índice do estado (1 = menor kT). Há uma linha por walker, mostrando em que estado ele estava a cada tentativa. É o gráfico mais importante para julgar a mistura.
+**Random walk das configurações** (topo). Eixo x: número da rodada de tentativas de troca. Eixo y: índice do estado (1 = menor kT). Há uma linha por walker, mostrando em que estado ele estava a cada tentativa. É o gráfico mais importante para avaliar a circulação das configurações.
 
 **Energia potencial por réplica** (meio, esquerda). Uma curva por estado, de azul (menor kT) a vermelho (maior kT). Mostra a média móvel da energia, para suavizar o ruído.
 - Passos negativos são a equilibração; a linha tracejada vertical em 0 marca o início das trocas.
@@ -438,7 +438,7 @@ A escada é o principal controle do REMD. Ela decide duas coisas independentes:
 
 | Se kT máx for… | Consequência |
 | --- | --- |
-| Baixo demais | As trocas funcionam e o random walk parece adequado, mas nenhuma réplica cruza as barreiras. A amostragem em kT mín não melhora, embora os indicadores de mistura sejam bons |
+| Baixo demais | As trocas funcionam e o random walk parece adequado, mas nenhuma réplica cruza as barreiras. A amostragem em kT mín não melhora, embora os indicadores de circulação sejam bons |
 | Alto demais | A faixa a cobrir cresce, e são necessárias mais réplicas para manter as trocas. Custo desperdiçado |
 
 Como escolher: olhe o painel do maior kT. Se ali as partículas estão espalhadas e os aglomerados não persistem, o topo cumpre sua função.
@@ -477,7 +477,7 @@ A progressão geométrica dá taxa de troca uniforme **se a capacidade calorífi
 
 Quando a taxa de troca não é uniforme, edite o campo kTs à mão: aproxime as temperaturas onde a taxa é baixa e afaste onde é alta. Depois clique no botão 1 para aplicar.
 
-#### Como julgar a escada
+#### Como avaliar a escada
 
 | Taxa de troca por par | Interpretação |
 | --- | --- |
@@ -562,9 +562,9 @@ Como saber se a equilibração bastou: no gráfico de energia, as curvas (em pas
 
 "nsteps" é o número de passos por clique em Run. Novos cliques acumulam estatística.
 
-A duração não deve ser julgada pelo número de passos, e sim pelo número de **round trips**: quantas vezes cada walker foi do menor ao maior kT e voltou. Cada round trip é, grosso modo, uma oportunidade de entregar uma configuração nova e descorrelacionada à réplica de referência. Com poucos round trips, as médias em kT mín ainda dependem de onde o sistema começou.
+A duração não deve ser avaliada pelo número de passos, e sim pelo número de **round trips**: quantas vezes cada walker foi do menor ao maior kT e voltou. Cada round trip é, grosso modo, uma oportunidade de entregar uma configuração nova e descorrelacionada à réplica de referência. Com poucos round trips, as médias em kT mín ainda dependem de onde o sistema começou.
 
-A GUI conta um round trip quando um walker que já tocou o maior kT volta ao menor.
+A GUI conta um round trip quando um walker que já tocou o maior kT volta ao menor. O contador fica no texto de estatísticas, na coluna da esquerda, abaixo dos botões: a linha "Round trips (kT mín-máx-mín)" dá o total, e a linha "por walker" dá quantos cada walker fez. O texto só aparece depois da primeira rodada de trocas.
 
 ### 8.7 Semente
 
@@ -616,7 +616,7 @@ Uma tabela para anotar os resultados:
 
 A configuração de menor energia esteve no menor kT em 52 % do tempo, no segundo estado em 25 % e nos demais no restante, o que reflete a sobreposição das P(U).
 
-**Conclusão**: a escada mistura bem, mas está mais densa do que o necessário.
+**Conclusão**: as configurações circulam bem pela escada, mas está mais densa do que o necessário.
 
 ### Teste 2: menos réplicas na mesma faixa
 
@@ -707,7 +707,7 @@ A configuração de menor energia esteve no menor kT em 52 % do tempo, no segund
 
 **Esperado**
 - Taxa de troca alta nos pares 1-2, 2-3, 4-5 e 5-6, e baixa no par 3-4.
-- Random walk: os walkers formam dois grupos que raramente se misturam.
+- Random walk: os walkers formam dois grupos que raramente trocam entre si.
 - Mapa "Ocupação": dois blocos.
 - Mapa "Trocas entre walkers": dois blocos de trocas frequentes, com poucas trocas entre os blocos.
 - Poucos round trips.
@@ -718,20 +718,20 @@ Se o par 3-4 ainda trocar bastante, aumente o buraco (por exemplo, 0.55, 0.57, 0
 
 ### Teste 9: o topo da escada é quente o bastante?
 
-**Objetivo**: ver que boa mistura não basta.
+**Objetivo**: ver que boa circulação não basta.
 
 **Configuração**: réplicas 6, kT mín 0.35, kT máx 0.45 (faixa estreita e fria). Aumente a equilibração para 5000.
 
 **Esperado**
-- Taxa de troca alta e muitos round trips: todos os indicadores de mistura parecem ótimos.
+- Taxa de troca alta e muitos round trips: todos os indicadores de circulação parecem ótimos.
 - Mas no painel do maior kT os aglomerados persistem: o topo não é quente o bastante para desfazê-los.
 - As configurações que chegam à réplica de referência são parecidas com as que já estavam lá.
 
-**Conclusão**: a avaliação tem duas etapas. A primeira é verificar se a escada mistura. A segunda é verificar se a temperatura máxima é suficiente para descorrelacionar o grau de liberdade lento. A taxa de troca e os round trips respondem apenas à primeira.
+**Conclusão**: a avaliação tem duas etapas. A primeira é verificar se as configurações circulam pela escada. A segunda é verificar se a temperatura máxima é suficiente para descorrelacionar o grau de liberdade lento. A taxa de troca e os round trips respondem apenas à primeira.
 
 ## 10. Diagnóstico: do sintoma ao parâmetro
 
-As tabelas abaixo relacionam cada sintoma ao parâmetro que deve ser alterado. A ordem sugerida é: preparação, mistura na escada e temperatura máxima.
+As tabelas abaixo relacionam cada sintoma ao parâmetro que deve ser alterado. A ordem sugerida é: preparação, circulação pela escada e temperatura máxima.
 
 **Etapa 1: a preparação está correta?**
 
@@ -740,7 +740,7 @@ As tabelas abaixo relacionam cada sintoma ao parâmetro que deve ser alterado. A
 | Curvas de energia ainda derivando no passo 0 | Gráfico de energia, parte negativa | Aumentar a equilibração |
 | Taxa de troca muda muito no início da corrida | Texto de estatísticas | Mesmo; descartar o início |
 
-**Etapa 2: a escada mistura?**
+**Etapa 2: as configurações circulam pela escada?**
 
 | Sintoma | Onde aparece na GUI | Causa provável | O que variar |
 | --- | --- | --- | --- |
@@ -755,7 +755,7 @@ As tabelas abaixo relacionam cada sintoma ao parâmetro que deve ser alterado. A
 
 | Sintoma | Onde aparece | Causa provável | O que variar |
 | --- | --- | --- | --- |
-| Mistura boa, mas a réplica de referência não muda | Painel do maior kT com aglomerados persistentes | kT máx baixo demais | Aumentar kT máx (e réplicas, para manter a taxa) |
+| Circulação boa, mas a réplica de referência não muda | Painel do maior kT com aglomerados persistentes | kT máx baixo demais | Aumentar kT máx (e réplicas, para manter a taxa) |
 | Energia de um painel quente dispara | Título do painel; gráfico de energia | dt grande demais para a réplica quente | Reduzir dt |
 
 ## 11. Da GUI para uma simulação molecular
@@ -850,7 +850,7 @@ Reset ou uma nova equilibração apagam os frames acumulados. O limite é de 50 
 ## 14. Limitações do modelo
 
 - **É um modelo didático.** Um gás de Lennard-Jones diluído em 2D não tem barreiras tão altas quanto as de uma biomolécula, e o ganho de amostragem com o REMD é menor do que em sistemas reais.
-- **A GUI mostra a mecânica do método, não o ganho final.** Os painéis diagnosticam a mistura na escada. Não há, na versão atual, um observável estrutural comparando a réplica de referência com e sem trocas.
+- **A GUI mostra a mecânica do método, não o ganho final.** Os painéis diagnosticam a circulação pela escada. Não há, na versão atual, um observável estrutural comparando a réplica de referência com e sem trocas.
 - **Custo O(n²).** Sem raio de corte nem lista de vizinhos, sistemas com mais de algumas centenas de partículas ficam lentos.
 - **Estatística curta.** Corridas de 20 000 passos dão algumas centenas de tentativas por par. As taxas de troca têm incerteza de alguns centésimos, e os mapas por walker têm mais ruído ainda. Diferenças pequenas entre corridas podem ser apenas flutuação; repita com outra semente antes de concluir.
 - **Só T-REMD.** Variantes como REST2 e REMD em Hamiltoniano não estão implementadas.
@@ -862,7 +862,8 @@ Reset ou uma nova equilibração apagam os frames acumulados. O limite é de 50 
 | Réplica | Uma das cópias do sistema simuladas em paralelo |
 | Estado | Uma temperatura da escada; fixo |
 | Walker | Uma configuração (posições e velocidades) que migra entre estados |
-| Escada | O conjunto das temperaturas |
+| Escada (*temperature ladder*) | O conjunto das temperaturas |
+| Circulação (*replica mixing*) | Capacidade de as configurações percorrerem todas as temperaturas da escada |
 | Réplica de referência | O estado de menor kT, o de interesse |
 | Taxa de troca (P_acc) | Fração das tentativas de troca aceitas em um par de estados vizinhos; também chamada de taxa de aceitação |
 | P(U) | Distribuição da energia potencial em um estado |
@@ -871,7 +872,7 @@ Reset ou uma nova equilibração apagam os frames acumulados. O limite é de 50 
 | Round trip | Ida de um walker do menor ao maior kT e volta |
 | Ocupação | Fração do tempo que um walker passa em cada estado |
 | Gargalo | Par de estados com taxa de troca muito baixa, que divide a escada |
-| Balanço detalhado | Condição que garante que o critério de troca preserva o ensemble de cada estado |
+| Balanço detalhado (*detailed balance*) | No equilíbrio, cada transição ocorre com a mesma frequência que a inversa; é o que garante que o critério de troca preserva o ensemble de cada estado |
 | Quasi-ergodicidade | Situação em que a simulação fica presa numa região e não amostra o ensemble completo |
 | Demultiplexar | Reconstruir a trajetória contínua de cada walker a partir das trajetórias por estado |
 | REST2 | Variante em que só as interações do soluto são escaladas, reduzindo o número de réplicas |
