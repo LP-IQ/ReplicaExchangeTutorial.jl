@@ -10,6 +10,8 @@
 # Cada painel da direita é um ESTADO (kT fixo); a cor é a identidade da CONFIGURAÇÃO (walker).
 # Troca aceita = duas configurações trocam de painel.
 # Documentação: README.md e docs/tutorial.md
+# Organização: primeiro o núcleo da simulação (não depende da janela), depois a
+# interface (remd_gui) e no fim o bloco que abre a janela quando roda como script.
 
 using GLMakie, Random, Printf
 
@@ -18,6 +20,7 @@ const MAXREP = 12
 # ----------------------------------------------------------------------------------------
 # Núcleo da simulação
 # ----------------------------------------------------------------------------------------
+# uma configuração (walker); o campo walker é a identidade e vai junto nas trocas
 mutable struct Replica
     x::Vector{Float64}; y::Vector{Float64}       # posições
     vx::Vector{Float64}; vy::Vector{Float64}     # velocidades
@@ -27,6 +30,8 @@ mutable struct Replica
 end
 Replica(n::Int, w::Int) = Replica(zeros(n), zeros(n), zeros(n), zeros(n), zeros(n), zeros(n), 0.0, w)
 
+# reps[k] = configuração que está no estado k (temperatura kTs[k])
+# trocar = permutar dois elementos de reps
 Base.@kwdef mutable struct Sim
     reps::Vector{Replica}
     kTs::Vector{Float64}
@@ -44,16 +49,20 @@ Base.@kwdef mutable struct Sim
     prepared::Bool = false
 end
 
+# LJ: U = 4eps[(sig/r)^12 - (sig/r)^6], todos os pares (O(n^2)), sem cutoff
 function forces!(r::Replica, L, eps, sig)
     n = length(r.x); fill!(r.fx, 0.0); fill!(r.fy, 0.0); U = 0.0; s2 = sig^2
     @inbounds for i in 1:n-1
         xi = r.x[i]; yi = r.y[i]
         for j in i+1:n
             dx = xi - r.x[j]; dy = yi - r.y[j]
+            # imagem mínima
             dx -= L * round(dx / L); dy -= L * round(dy / L)
             r2 = dx * dx + dy * dy
+            # (sig/r)^6, sem sqrt
             s6 = (s2 / r2)^3
             U += 4 * eps * (s6 * s6 - s6)
+            # |F|/r
             fm = 24 * eps * (2 * s6 * s6 - s6) / r2
             r.fx[i] += fm * dx; r.fy[i] += fm * dy
             r.fx[j] -= fm * dx; r.fy[j] -= fm * dy
@@ -63,6 +72,7 @@ function forces!(r::Replica, L, eps, sig)
     return U
 end
 
+# anda cada partícula na direção da força, passo máx. 0.05 (só para tirar sobreposições)
 function minimize!(r::Replica, L, eps, sig; niter=500)
     n = length(r.x)
     for _ in 1:niter
@@ -79,23 +89,30 @@ function minimize!(r::Replica, L, eps, sig; niter=500)
 end
 
 # Langevin BAOAB na temperatura kT
+# c1 = exp(-gam*dt); c2 escolhido para manter <v^2> = kT (Leimkuhler & Matthews 2013)
 function langevin_step!(r::Replica, kT, dt, gam, L, eps, sig, rng)
     n = length(r.x); c1 = exp(-gam * dt); c2 = sqrt(kT * (1 - c1^2)); h = 0.5 * dt
     @inbounds for i in 1:n
+        # B
         r.vx[i] += h * r.fx[i]; r.vy[i] += h * r.fy[i]
+        # A
         r.x[i] += h * r.vx[i]; r.y[i] += h * r.vy[i]
+        # O: atrito + ruído
         r.vx[i] = c1 * r.vx[i] + c2 * randn(rng)
         r.vy[i] = c1 * r.vy[i] + c2 * randn(rng)
+        # A
         r.x[i] = mod(r.x[i] + h * r.vx[i], L)
         r.y[i] = mod(r.y[i] + h * r.vy[i], L)
     end
     forces!(r, L, eps, sig)
     @inbounds for i in 1:n
+        # B
         r.vx[i] += h * r.fx[i]; r.vy[i] += h * r.fy[i]
     end
     return nothing
 end
 
+# entre trocas as réplicas são independentes -> uma por thread
 function step_all!(s::Sim)
     Threads.@threads for i in eachindex(s.reps)
         langevin_step!(s.reps[i], s.kTs[i], s.dt, s.gam, s.L, s.eps, s.sig, s.rngs[i])
@@ -107,6 +124,7 @@ end
 # P = min{1, exp[(β_i − β_j)(U_i − U_j)]}; pares pares e ímpares alternados
 function attempt_exchange!(s::Sim, rng)
     R = length(s.reps); out = Tuple{Int,Bool,Float64}[]
+    # nattempt par: pares 1-2, 3-4, ...; ímpar: 2-3, 4-5, ...
     for i in (1 + s.nattempt % 2):2:(R - 1)
         a = s.reps[i]; b = s.reps[i+1]
         delta = (1 / s.kTs[i] - 1 / s.kTs[i+1]) * (a.U - b.U)
@@ -119,6 +137,7 @@ function attempt_exchange!(s::Sim, rng)
             sc = sqrt(s.kTs[i+1] / s.kTs[i])       # v ∝ sqrt(T_novo/T_antigo)
             a.vx .*= sc; a.vy .*= sc
             b.vx ./= sc; b.vy ./= sc
+            # troca de estado (as forças não mudam, só dependem das posições)
             s.reps[i], s.reps[i+1] = b, a
         end
         push!(out, (i, ok, P))
@@ -127,6 +146,7 @@ function attempt_exchange!(s::Sim, rng)
     return out
 end
 
+# mesma configuração inicial em todas; walker w começa no estado w
 function new_sim(kTs, n, L, eps, sig, dt, gam; seed=rand(1:10^6))
     R = length(kTs); rng = MersenneTwister(seed)
     x0 = L .* rand(rng, n); y0 = L .* rand(rng, n)
@@ -146,6 +166,7 @@ function prepare!(s::Sim)
     for i in 1:R
         r = s.reps[i]; kT = s.kTs[i]
         r.x .= r1.x; r.y .= r1.y
+        # velocidades de Maxwell-Boltzmann (m = 1)
         r.vx .= sqrt(kT) .* randn(s.rngs[i], length(r.x))
         r.vy .= sqrt(kT) .* randn(s.rngs[i], length(r.x))
         forces!(r, s.L, s.eps, s.sig)
@@ -213,6 +234,7 @@ function tempcolor(k, R)
     return RGBf(c.r, c.g, c.b)
 end
 
+# tudo da interface fica aqui dentro; as funções internas compartilham as variáveis abaixo
 function remd_gui()   # se ainda cortar: redimensione a janela ou edite o tamanho em Figure(size=...)
     monitor = GLMakie.GLFW.GetPrimaryMonitor()
     vidmode = GLMakie.GLFW.GetVideoMode(monitor)
@@ -285,6 +307,7 @@ function remd_gui()   # se ainda cortar: redimensione a janela ou edite o tamanh
     ax_O = Axis(g_O[1, 1]; aspect=DataAspect(), title="Ocupação", xlabel="índice do kT (1 = menor)", ylabel="walker")
     rowsize!(center, 1, Relative(0.27)); rowsize!(center, 2, Relative(0.27))
 
+    # gráficos ligados a Observables: mudou o valor (obs[] = ...) -> redesenha
     pts_main = Observable(Point2f[]); col_main = Observable(RGBf(0, 0, 0))
     scatter!(ax_main, pts_main; color=col_main, markersize=9, strokewidth=1.0, strokecolor=:black)
 
@@ -489,6 +512,7 @@ function remd_gui()   # se ainda cortar: redimensione a janela ou edite o tamanh
         return nothing
     end
 
+    # round trip: tocou kT mín -> tocou kT máx -> voltou ao kT mín
     function record_walk()
         s = sim[]; R = length(s.reps)
         push!(minpts[], Point2f(s.nattempt, argmin([r.U for r in s.reps])))
@@ -557,6 +581,7 @@ function remd_gui()   # se ainda cortar: redimensione a janela ou edite o tamanh
         return nothing
     end
 
+    # botão 1: minimiza e equilibra sem trocas; a equilibração fica em passos < 0
     function equilibrate()
         s = sim[]
         logtext[] = "Minimizando..."; yield()
@@ -588,6 +613,7 @@ function remd_gui()   # se ainda cortar: redimensione a janela ou edite o tamanh
         return nothing
     end
 
+    # botão 2: laço principal (trocas a cada nex passos, energia a cada 10)
     function run_remd()
         s = sim[]
         s.prepared || error("minimize e equilibre primeiro (botão 1)")
@@ -632,6 +658,7 @@ function remd_gui()   # se ainda cortar: redimensione a janela ou edite o tamanh
     end
 
     # Executa f em tarefa assíncrona: uma por vez, com erro mostrado no rodapé
+    # @async para a janela não travar durante a simulação
     function launch(f)
         if busy[]
             logtext[] = "Já há uma simulação em andamento. Use Stop antes."
@@ -786,6 +813,7 @@ function remd_gui()   # se ainda cortar: redimensione a janela ou edite o tamanh
     return fig
 end
 
+# rodando como script: abre a janela e espera fechar
 if abspath(PROGRAM_FILE) == @__FILE__
     fig = remd_gui()
     wait(display(fig))
