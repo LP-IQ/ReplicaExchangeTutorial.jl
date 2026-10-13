@@ -787,10 +787,12 @@ Os parâmetros da GUI têm equivalentes diretos em pacotes de dinâmica molecula
 
 ### 12.1 Figuras
 
-O botão **Salvar figuras (PNG por gráfico)** cria, no diretório de onde o Julia foi iniciado, uma pasta com nome do tipo
+Figuras e trajetórias são salvas numa pasta com o nome do teste escolhido no menu Teste (por exemplo, `teste8_gargalo/`), criada no diretório de onde o Julia foi iniciado. Sem teste escolhido, a pasta é `sem_teste/`.
+
+O botão **Salvar figuras (PNG por gráfico)** cria, dentro dessa pasta, uma subpasta com nome do tipo
 
 ```
-remd_figs_R6_kT0.55-0.86_n100_troca50_passo20000/
+teste1_referencia/remd_figs_R6_kT0.55-0.86_n100_troca50_passo20000/
 ```
 
 contendo:
@@ -812,7 +814,7 @@ Os quatro mapas são salvos independentemente de qual está selecionado. A resol
 
 ### 12.2 Trajetória
 
-O botão **Salvar trajetória do menor kT (XYZ)** grava dois arquivos:
+O botão **Salvar trajetória do menor kT (XYZ)** grava dois arquivos na pasta do teste:
 
 - `remd_traj_….xyz`: um frame a cada 10 passos do Run, sempre do estado de menor kT. A equilibração não entra. A linha de comentário de cada frame traz o passo, o walker que estava ali, a energia, o kT e L.
 - `remd_traj_….tcl`: um script para o VMD que carrega a trajetória com a representação correta.

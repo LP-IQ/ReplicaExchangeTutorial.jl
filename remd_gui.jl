@@ -733,6 +733,14 @@ function remd_gui()   # se ainda cortar: redimensione a janela ou edite o tamanh
         launch(run_remd)
     end
     # recorta da imagem da janela a região ocupada pelos blocos 'objs' (eixo + título + rótulos) e salva
+    # pasta de saída com o nome do teste escolhido no menu (ex.: "teste8_gargalo"); sem teste: "sem_teste"
+    function pasta_teste()
+        sel = menu_teste.selection[]
+        (sel === nothing || sel == "(escolher)") && return "sem_teste"
+        nome = Base.Unicode.normalize(lowercase(sel), stripmark=true)   # tira acentos
+        return "teste" * strip(replace(nome, r"[^a-z0-9]+" => "_"), '_')
+    end
+
     function crop_save(fn, img, objs; pad=10)
         H, W = size(img); sc = W / size(fig.scene)[1]          # pixels da imagem por unidade da figura
         x0 = Inf; x1 = -Inf; y0 = Inf; y1 = -Inf
@@ -751,8 +759,8 @@ function remd_gui()   # se ainda cortar: redimensione a janela ou edite o tamanh
     on(btn_save.clicks) do _
         try
             s = sim[]; R = length(s.reps)
-            dir = @sprintf("remd_figs_R%d_kT%.2f-%.2f_n%d_troca%d_passo%d", R, s.kTs[1], s.kTs[end],
-                           length(s.reps[1].x), geti(tb_nex), s.step)
+            dir = joinpath(pasta_teste(), @sprintf("remd_figs_R%d_kT%.2f-%.2f_n%d_troca%d_passo%d", R, s.kTs[1], s.kTs[end],
+                           length(s.reps[1].x), geti(tb_nex), s.step))
             mkpath(dir)
             img = GLMakie.Makie.colorbuffer(fig)
             save(joinpath(dir, "janela_completa.png"), img)
@@ -777,7 +785,8 @@ function remd_gui()   # se ainda cortar: redimensione a janela ou edite o tamanh
         try
             isempty(traj) && error("sem frames: rode o REMD primeiro (botão 2)")
             s = sim[]; R = length(s.reps); n = length(traj[1][4])
-            fn = @sprintf("remd_traj_kT%.2f_R%d_n%d_%dframes.xyz", s.kTs[1], R, n, length(traj))
+            pasta = pasta_teste(); mkpath(pasta)
+            fn = joinpath(pasta, @sprintf("remd_traj_kT%.2f_R%d_n%d_%dframes.xyz", s.kTs[1], R, n, length(traj)))
             open(fn, "w") do io
                 for (st, w, U, x, y) in traj
                     println(io, n)
@@ -801,7 +810,7 @@ function remd_gui()   # se ainda cortar: redimensione a janela ou edite o tamanh
                 println(io, "display projection Orthographic")
                 println(io, "display resetview")
             end
-            logtext[] = "Trajetória salva (.xyz + .tcl, $(length(traj)) frames) em $(pwd()). Abrir com: vmd -e " * tcl * " (Windows: Tk Console do VMD, source " * replace(abspath(tcl), '\\' => '/') * ")"
+            logtext[] = "Trajetória salva (.xyz + .tcl, $(length(traj)) frames) em $(abspath(pasta)). Abrir com: vmd -e " * tcl * " (Windows: Tk Console do VMD, source " * replace(abspath(tcl), '\\' => '/') * ")"
         catch err
             logtext[] = "ERRO ao salvar: " * sprint(showerror, err)
         end
