@@ -1,16 +1,21 @@
-# Tutorial de Replica Exchange MD (REMD)
+# ReplicaExchangeTutorial.jl
+
+[![CI](https://github.com/LP-IQ/ReplicaExchangeTutorial.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/LP-IQ/ReplicaExchangeTutorial.jl/actions/workflows/CI.yml)
 
 Tutorial sobre **Replica Exchange Molecular Dynamics (T-REMD)**: quais são os parâmetros de controle do método, como cada um afeta a amostragem e o que variar quando a amostragem falha.
 
-A ferramenta do tutorial é uma interface gráfica interativa em Julia (`remd_gui.jl`) que roda um REMD num sistema simples, um fluido de Lennard-Jones em 2D, e mostra o efeito de cada parâmetro nos gráficos. Inspirada na interface do [FundamentosDMC.jl](https://github.com/m3g/FundamentosDMC.jl).
+A ferramenta do tutorial é uma interface gráfica interativa em Julia (`remd_gui()`) que roda um REMD num sistema simples, um fluido de Lennard-Jones em 2D, e mostra o efeito de cada parâmetro nos gráficos. Inspirada na interface do [FundamentosDMC.jl](https://github.com/m3g/FundamentosDMC.jl).
 
 ## Conteúdo
 
 | Arquivo | O que é |
 | --- | --- |
 | [docs/tutorial.md](docs/tutorial.md) | O tutorial completo: teoria, instalação, visita guiada à GUI, nove testes passo a passo, diagnóstico e relação com simulações moleculares |
-| `remd_gui.jl` | A GUI usada nos testes |
-| `run_windows.bat` | Atalho para abrir a GUI no Windows |
+| `src/simulacao.jl` | Núcleo da simulação: Lennard-Jones 2D, Langevin e critério de troca |
+| `src/interface.jl` | A GUI usada nos testes |
+| `test/runtests.jl` | Testes do núcleo (forças, termostato, critério de troca) |
+| `remd_gui.jl` | Abre a GUI a partir do repositório clonado |
+| `run_windows.bat` | Atalho para abrir a GUI no Windows a partir do repositório |
 
 ## Como seguir o tutorial
 
@@ -35,37 +40,57 @@ A ferramenta do tutorial é uma interface gráfica interativa em Julia (`remd_gu
 
 ## Instalação
 
-Requer [Julia](https://julialang.org/downloads/) e suporte a OpenGL 3.3 (exigência do GLMakie). Testado em Ubuntu 20.04; para Windows, veja a seção [Windows](#windows).
+Requer [Julia](https://julialang.org/downloads/) 1.10 ou mais recente e suporte a OpenGL 3.3 (exigência do GLMakie). No REPL do Julia, aperte `]` e digite:
 
-```bash
-git clone https://github.com/LP-IQ/remd-tutorial.git
-cd remd-tutorial
-julia -e 'using Pkg; Pkg.add("GLMakie")'
+```julia
+pkg> add ReplicaExchangeTutorial
+```
+
+Enquanto o registro no General não estiver disponível, instale pela URL:
+
+```julia
+pkg> add https://github.com/LP-IQ/ReplicaExchangeTutorial.jl
 ```
 
 ## Uso
 
 ```bash
+julia -t auto
+```
+
+```julia
+julia> using ReplicaExchangeTutorial
+julia> remd_gui()
+```
+
+`-t auto` usa uma thread por núcleo; cada réplica é propagada numa thread. A primeira execução é mais lenta, porque o Julia compila o GLMakie. Figuras e trajetórias são salvas na pasta atual do Julia (`pwd()`).
+
+Num só comando: `julia -t auto -e 'using ReplicaExchangeTutorial; wait(display(remd_gui()))'`.
+
+### A partir do repositório
+
+```bash
+git clone https://github.com/LP-IQ/ReplicaExchangeTutorial.jl.git
+cd ReplicaExchangeTutorial.jl
 julia -t auto remd_gui.jl
 ```
 
-`-t auto` usa uma thread por núcleo; cada réplica é propagada numa thread. A primeira execução é mais lenta, porque o Julia compila o GLMakie.
+Na primeira vez, o script instala as dependências no ambiente do repositório.
 
 ### Windows
 
 1. Instale o Julia ([julialang.org/downloads](https://julialang.org/downloads/) ou `winget install --name Julia --id 9NJNWW8PVKMN -e -s msstore`).
-2. Baixe o repositório (`git clone` ou **Code → Download ZIP**).
-3. Abra o Julia e rode `using Pkg; Pkg.add("GLMakie")`.
-4. Dê duplo clique em `run_windows.bat`.
+2. No PowerShell, abra o Julia com `julia -t auto` e siga os passos de Instalação e Uso acima.
 
-Detalhes e problemas comuns na seção 5.5 do [tutorial](docs/tutorial.md).
+Sem digitar comandos: baixe o repositório (**Code → Download ZIP**) e dê duplo clique em `run_windows.bat`. Detalhes e problemas comuns na seção 5.5 do [tutorial](docs/tutorial.md).
 
-No REPL:
+### Testes
 
 ```julia
-include("remd_gui.jl")
-remd_gui()
+pkg> test ReplicaExchangeTutorial
 ```
+
+## Na janela
 
 Sequência básica:
 
@@ -91,6 +116,10 @@ P = \min\left\{1,\ \exp\left[\left(\frac{1}{kT_i}-\frac{1}{kT_j}\right)\left(U_i
 
 - O cálculo de forças é O(n²), em que n é o número de partículas; acima de algumas centenas de partículas a simulação fica lenta.
 - É uma ferramenta didática, não um código de produção.
+
+## Licença
+
+MIT. Veja [LICENSE](LICENSE).
 
 ## Autores
 

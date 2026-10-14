@@ -2,3 +2,5 @@ remd_figs_*/
 remd_traj_*.xyz
 remd_traj_*.tcl
 Manifest.toml
+teste*/
+sem_teste/

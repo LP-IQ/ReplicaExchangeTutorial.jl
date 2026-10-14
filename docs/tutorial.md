@@ -1,6 +1,6 @@
 # Tutorial de Replica Exchange MD
 
-Este tutorial apresenta o método de Replica Exchange Molecular Dynamics em temperatura (T-REMD) usando a interface gráfica `remd_gui.jl`. A proposta é variar um parâmetro de cada vez, observar o efeito na amostragem e, a partir disso, discutir como diagnosticar e corrigir problemas.
+Este tutorial apresenta o método de Replica Exchange Molecular Dynamics em temperatura (T-REMD) usando a interface gráfica do pacote Julia `ReplicaExchangeTutorial`. A proposta é variar um parâmetro de cada vez, observar o efeito na amostragem e, a partir disso, discutir como diagnosticar e corrigir problemas.
 
 Os tópicos são:
 
@@ -192,65 +192,80 @@ As réplicas são independentes entre uma tentativa de troca e a seguinte, e a G
 
 ### 5.1 Requisitos
 
-- Julia instalado. Baixe em https://julialang.org/downloads/ ou use o `juliaup`.
+- Julia 1.10 ou mais recente. Baixe em https://julialang.org/downloads/ ou use o `juliaup`.
 - Suporte a OpenGL 3.3 (exigência do pacote gráfico GLMakie). Qualquer computador com placa de vídeo dos últimos anos atende.
 - Testado em Ubuntu 20.04. Para Windows, veja a seção 5.5.
 
-### 5.2 Baixar
+### 5.2 Instalar o pacote (uma vez)
 
-```bash
-git clone https://github.com/LP-IQ/remd-tutorial.git
-cd remd-tutorial
-```
-
-### 5.3 Instalar o pacote gráfico (uma vez)
-
-```bash
-julia -e 'using Pkg; Pkg.add("GLMakie")'
-```
-
-Isso baixa e compila o GLMakie e suas dependências. Demora alguns minutos.
-
-### 5.4 Abrir a GUI
-
-```bash
-julia -t auto remd_gui.jl
-```
-
-- `-t auto` faz o Julia usar uma thread por núcleo. Com 6 réplicas, 6 threads já aproveitam todo o paralelismo.
-- A primeira abertura é lenta (pode passar de um minuto) porque o Julia compila o código gráfico. As seguintes são mais rápidas.
-
-Alternativa, de dentro do REPL do Julia:
+A GUI é distribuída como o pacote Julia `ReplicaExchangeTutorial`. No REPL do Julia, aperte `]` para entrar no modo de pacotes e digite:
 
 ```julia
-include("remd_gui.jl")
-remd_gui()
+pkg> add ReplicaExchangeTutorial
+```
+
+Isso instala o pacote e o GLMakie, com suas dependências, e compila tudo. Demora alguns minutos. Aperte Backspace para voltar ao REPL normal.
+
+Se o comando acima disser que o pacote não foi encontrado, instale direto do GitHub:
+
+```julia
+pkg> add https://github.com/LP-IQ/ReplicaExchangeTutorial.jl
+```
+
+### 5.3 Abrir a GUI
+
+Inicie o Julia com uma thread por núcleo e abra a interface:
+
+```bash
+julia -t auto
+```
+
+```julia
+julia> using ReplicaExchangeTutorial
+julia> remd_gui()
+```
+
+- `-t auto` faz o Julia usar uma thread por núcleo. Cada réplica roda numa thread, então com 6 réplicas, 6 threads já aproveitam todo o paralelismo. Sem `-t auto`, a GUI avisa no terminal e roda as réplicas em série.
+- A primeira abertura é lenta (pode passar de um minuto) porque o Julia compila o código gráfico. As seguintes são mais rápidas.
+- Figuras e trajetórias são salvas a partir da pasta em que o Julia está (`pwd()`). Para salvar em outro lugar, use `cd("caminho/da/pasta")` antes de `remd_gui()`.
+
+Para abrir com um único comando no terminal:
+
+```bash
+julia -t auto -e 'using ReplicaExchangeTutorial; wait(display(remd_gui()))'
 ```
 
 Se a janela abrir mostrando os painéis com as partículas espalhadas, a instalação está correta.
 
+### 5.4 Alternativa: a partir do repositório
+
+Para ler ou modificar o código, clone o repositório e use o script da raiz:
+
+```bash
+git clone https://github.com/LP-IQ/ReplicaExchangeTutorial.jl.git
+cd ReplicaExchangeTutorial.jl
+julia -t auto remd_gui.jl
+```
+
+O script ativa o ambiente do próprio repositório e, na primeira vez, instala as dependências. O código da simulação está em `src/simulacao.jl` e o da interface em `src/interface.jl`. Os testes automáticos rodam com `pkg> test ReplicaExchangeTutorial`.
+
 ### 5.5 Windows
 
-O código é o mesmo; mudam só a instalação e a forma de abrir.
+O pacote é o mesmo; mudam só a instalação do Julia e a forma de abrir.
 
 1. **Julia.** Instale pelo instalador de https://julialang.org/downloads/ ou, no PowerShell, com `winget install --name Julia --id 9NJNWW8PVKMN -e -s msstore` (instala o `juliaup`). Feche e reabra o terminal e confira com `julia --version`.
-2. **Repositório.** Com o Git for Windows: `git clone https://github.com/LP-IQ/remd-tutorial.git`. Sem Git: no GitHub, botão **Code → Download ZIP**, e extraia a pasta.
-3. **GLMakie (uma vez).** Abra o Julia (menu Iniciar ou `julia` no terminal) e digite:
+2. **Abrir o Julia com threads.** No PowerShell, digite `julia -t auto`. O atalho do menu Iniciar abre o Julia com uma thread só; a GUI funciona, mas mais devagar.
+3. **Instalar e abrir.** No REPL, faça como nas seções 5.2 e 5.3:
 
    ```julia
-   using Pkg; Pkg.add("GLMakie")
+   pkg> add ReplicaExchangeTutorial
+   julia> using ReplicaExchangeTutorial
+   julia> remd_gui()
    ```
 
-   No Windows, o comando `julia -e '…'` da seção 5.3 depende do terminal por causa das aspas; o REPL evita esse problema.
-4. **Abrir a GUI.** Dê duplo clique em `run_windows.bat`, na pasta do repositório. Ele roda `julia -t auto remd_gui.jl` na pasta certa e mantém a janela do terminal aberta para mostrar mensagens de erro. Alternativa no PowerShell, dentro da pasta: `julia -t auto remd_gui.jl`. Alternativa no REPL:
+Alternativa sem digitar comandos: baixe o repositório (no GitHub, **Code → Download ZIP**), extraia a pasta e dê duplo clique em `run_windows.bat`. Ele roda `julia -t auto remd_gui.jl` na pasta certa, instala as dependências na primeira vez e mantém a janela do terminal aberta para mostrar mensagens de erro. Nesse caso, figuras e trajetórias são salvas na pasta do repositório.
 
-   ```julia
-   cd("C:/Users/SEU_USUARIO/remd-tutorial")   # use / ou \\ no caminho
-   include("remd_gui.jl")
-   remd_gui()
-   ```
-
-As figuras e trajetórias são salvas na pasta de onde o Julia foi iniciado; com o `run_windows.bat`, é a pasta do repositório. Para abrir a trajetória no VMD, veja a seção 12.2.
+Para abrir a trajetória no VMD, veja a seção 12.2.
 
 ## 6. Visita guiada à janela
 
@@ -891,6 +906,7 @@ Reset ou uma nova equilibração apagam os frames acumulados. O limite é de 50 
 | --- | --- |
 | Windows: "julia" não é reconhecido como comando | O Julia não está no PATH. Reabra o terminal depois de instalar; com o instalador de julialang.org, marque a opção "Add Julia to PATH" |
 | Windows: a janela da GUI não abre (erro de OpenGL) | O GLMakie exige OpenGL 3.3. Atualize o driver da placa de vídeo; em área de trabalho remota ou máquina virtual pode não haver suporte |
+| `pkg> add ReplicaExchangeTutorial` diz que o pacote não existe | Instale pela URL: `pkg> add https://github.com/LP-IQ/ReplicaExchangeTutorial.jl` (seção 5.2) |
 | A janela demora muito a abrir na primeira vez | Normal: o Julia está compilando o GLMakie. As próximas aberturas são mais rápidas |
 | Mudei kTs (ou n, L) e nada mudou | Esses campos só valem depois de Reset ou do botão 1 |
 | Digitei um valor e ele não foi aceito | Pressione Enter depois de digitar. Use ponto como separador decimal |
