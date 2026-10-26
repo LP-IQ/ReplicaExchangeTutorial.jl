@@ -202,13 +202,15 @@ Replicas are independent between one exchange attempt and the next, and the GUI 
 
 ### 5.2 Install the package (once)
 
-The GUI is distributed as the Julia package `ReplicaExchangeTutorial`. In the Julia REPL, press `]` to enter package mode and type:
+The GUI is distributed as the Julia package `ReplicaExchangeTutorial`. In the Julia REPL, type:
 
 ```julia
-pkg> add ReplicaExchangeTutorial
+julia> import Pkg; Pkg.add("ReplicaExchangeTutorial")
 ```
 
-This installs the package and GLMakie, with their dependencies, and compiles everything. It takes a few minutes. Press Backspace to go back to the normal REPL.
+This installs the package and GLMakie, with their dependencies, and compiles everything. It takes a few minutes.
+
+The same can be done in the REPL package mode: press `]` (the prompt changes from `julia>` to `pkg>`), type `add ReplicaExchangeTutorial` and press Backspace to go back. A bare `add` only works inside that mode; typed at the `julia>` prompt, it is a syntax error.
 
 ### 5.3 Open the GUI
 
@@ -245,7 +247,7 @@ cd ReplicaExchangeTutorial.jl
 julia -t auto remd_gui.jl
 ```
 
-The script activates the repository's own environment and installs the dependencies the first time. The simulation code is in `src/simulacao.jl` and the interface code in `src/interface.jl`. The automated tests run with `pkg> test ReplicaExchangeTutorial`.
+The script activates the repository's own environment and installs the dependencies the first time. The simulation code is in `src/simulacao.jl` and the interface code in `src/interface.jl`. The automated tests run with `import Pkg; Pkg.test("ReplicaExchangeTutorial")`.
 
 ### 5.5 Windows
 
@@ -256,7 +258,7 @@ The package is the same; only the Julia installation and the way to launch it ch
 3. **Install and open.** In the REPL, do as in sections 5.2 and 5.3:
 
    ```julia
-   pkg> add ReplicaExchangeTutorial
+   julia> import Pkg; Pkg.add("ReplicaExchangeTutorial")
    julia> using ReplicaExchangeTutorial
    julia> remd_gui()
    ```

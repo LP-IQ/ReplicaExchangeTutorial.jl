@@ -51,8 +51,14 @@
     });
     return b;
   }
-  // tira o prompt do REPL (pkg> / julia>) do texto copiado
-  function semPrompt(s) { return s.replace(/^(pkg|julia)> /gm, "").replace(/\s+$/, ""); }
+  // copia só o código, sem o prompt "julia> ". Linhas do modo de pacotes ("pkg> add X")
+  // viram a chamada equivalente da API do Pkg, que funciona colada no prompt julia>.
+  function semPrompt(s) {
+    return s.replace(/^pkg> (add|rm|test|update|up) (\S+)\s*$/gm, function (_, cmd, pkg) {
+      var f = { add: "add", rm: "rm", test: "test", update: "update", up: "update" }[cmd];
+      return 'import Pkg; Pkg.' + f + '("' + pkg + '")';
+    }).replace(/^julia> /gm, "").replace(/\s+$/, "");
+  }
   document.querySelectorAll(".comando").forEach(function (c) {
     var code = c.querySelector("code");
     c.appendChild(botaoCopiar(function () { return semPrompt(code.textContent); }));

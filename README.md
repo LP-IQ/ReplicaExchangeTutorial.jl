@@ -4,7 +4,7 @@
 
 **Site:** https://lp-iq.github.io/ReplicaExchangeTutorial.jl/ · tutorial em [português](docs/tutorial.md) e em [English](docs/tutorial_en.md)
 
-> **English:** an interactive Julia GUI and tutorial on temperature replica exchange molecular dynamics (T-REMD). Install with `pkg> add ReplicaExchangeTutorial`, start Julia with `julia -t auto` and run `using ReplicaExchangeTutorial; remd_gui()`. The full tutorial in English is in [docs/tutorial_en.md](docs/tutorial_en.md) and on the [website](https://lp-iq.github.io/ReplicaExchangeTutorial.jl/tutorial-en.html).
+> **English:** an interactive Julia GUI and tutorial on temperature replica exchange molecular dynamics (T-REMD). Install with `import Pkg; Pkg.add("ReplicaExchangeTutorial")`, start Julia with `julia -t auto` and run `using ReplicaExchangeTutorial; remd_gui()`. The full tutorial in English is in [docs/tutorial_en.md](docs/tutorial_en.md) and on the [website](https://lp-iq.github.io/ReplicaExchangeTutorial.jl/tutorial-en.html).
 
 Tutorial sobre **Replica Exchange Molecular Dynamics (T-REMD)**: quais são os parâmetros de controle do método, como cada um afeta a amostragem e o que variar quando a amostragem falha.
 
@@ -46,11 +46,13 @@ A ferramenta do tutorial é uma interface gráfica interativa em Julia (`remd_gu
 
 ## Instalação
 
-Requer [Julia](https://julialang.org/downloads/) 1.10 ou mais recente e suporte a OpenGL 3.3 (exigência do GLMakie). No REPL do Julia, aperte `]` e digite:
+Requer [Julia](https://julialang.org/downloads/) 1.10 ou mais recente e suporte a OpenGL 3.3 (exigência do GLMakie). No REPL do Julia:
 
 ```julia
-pkg> add ReplicaExchangeTutorial
+julia> import Pkg; Pkg.add("ReplicaExchangeTutorial")
 ```
+
+Ou, no modo de pacotes (aperte `]` no REPL): `pkg> add ReplicaExchangeTutorial`.
 
 ## Uso
 
@@ -87,7 +89,7 @@ Sem digitar comandos: baixe o repositório (**Code → Download ZIP**) e dê dup
 ### Testes
 
 ```julia
-pkg> test ReplicaExchangeTutorial
+julia> import Pkg; Pkg.test("ReplicaExchangeTutorial")
 ```
 
 ## Na janela

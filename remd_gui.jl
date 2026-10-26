@@ -1,7 +1,7 @@
 #!/usr/bin/env julia
 # Abre a GUI a partir do repositório clonado, sem instalar o pacote:
 #     julia -t auto remd_gui.jl
-# Com o pacote instalado (pkg> add ReplicaExchangeTutorial), basta:
+# Com o pacote instalado (import Pkg; Pkg.add("ReplicaExchangeTutorial")), basta:
 #     using ReplicaExchangeTutorial; remd_gui()
 
 using Pkg

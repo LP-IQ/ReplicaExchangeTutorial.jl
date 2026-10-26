@@ -200,13 +200,15 @@ As réplicas são independentes entre uma tentativa de troca e a seguinte, e a G
 
 ### 5.2 Instalar o pacote (uma vez)
 
-A GUI é distribuída como o pacote Julia `ReplicaExchangeTutorial`. No REPL do Julia, aperte `]` para entrar no modo de pacotes e digite:
+A GUI é distribuída como o pacote Julia `ReplicaExchangeTutorial`. No REPL do Julia, digite:
 
 ```julia
-pkg> add ReplicaExchangeTutorial
+julia> import Pkg; Pkg.add("ReplicaExchangeTutorial")
 ```
 
-Isso instala o pacote e o GLMakie, com suas dependências, e compila tudo. Demora alguns minutos. Aperte Backspace para voltar ao REPL normal.
+Isso instala o pacote e o GLMakie, com suas dependências, e compila tudo. Demora alguns minutos.
+
+O mesmo pode ser feito pelo modo de pacotes do REPL: aperte `]` (o prompt muda de `julia>` para `pkg>`), digite `add ReplicaExchangeTutorial` e aperte Backspace para voltar. O `add` sozinho só funciona dentro desse modo; digitado no prompt `julia>`, dá erro de sintaxe.
 
 ### 5.3 Abrir a GUI
 
@@ -243,7 +245,7 @@ cd ReplicaExchangeTutorial.jl
 julia -t auto remd_gui.jl
 ```
 
-O script ativa o ambiente do próprio repositório e, na primeira vez, instala as dependências. O código da simulação está em `src/simulacao.jl` e o da interface em `src/interface.jl`. Os testes automáticos rodam com `pkg> test ReplicaExchangeTutorial`.
+O script ativa o ambiente do próprio repositório e, na primeira vez, instala as dependências. O código da simulação está em `src/simulacao.jl` e o da interface em `src/interface.jl`. Os testes automáticos rodam com `import Pkg; Pkg.test("ReplicaExchangeTutorial")`.
 
 ### 5.5 Windows
 
@@ -254,7 +256,7 @@ O pacote é o mesmo; mudam só a instalação do Julia e a forma de abrir.
 3. **Instalar e abrir.** No REPL, faça como nas seções 5.2 e 5.3:
 
    ```julia
-   pkg> add ReplicaExchangeTutorial
+   julia> import Pkg; Pkg.add("ReplicaExchangeTutorial")
    julia> using ReplicaExchangeTutorial
    julia> remd_gui()
    ```

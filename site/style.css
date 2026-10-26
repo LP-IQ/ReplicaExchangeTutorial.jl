@@ -436,3 +436,5 @@ pre.sourceCode a { color: inherit; text-decoration: none; }
 .equacao p { margin: 0; }
 .artigo .equacao { margin: 18px 0; }
 .artigo p a, .artigo li a { overflow-wrap: anywhere; }
+.grade > * { min-width: 0; }
+.passo pre code { white-space: pre-wrap; overflow-wrap: anywhere; }
