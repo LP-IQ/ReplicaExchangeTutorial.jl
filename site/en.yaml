@@ -1,0 +1,11 @@
+idioma: en
+idioma-html: en
+en: true
+pagina: tutorial-en.html
+fonte: tutorial_en.md
+rotulo-inicio: Home
+rotulo-indice: On this page
+rotulo-topo: Back to top
+rotulo-fonte: "Source text:"
+subtitulo: Theory, control parameters and nine guided tests in the GUI.
+descricao: Tutorial on temperature replica exchange molecular dynamics (T-REMD) with an interactive Julia GUI.

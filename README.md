@@ -2,6 +2,10 @@
 
 [![CI](https://github.com/LP-IQ/ReplicaExchangeTutorial.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/LP-IQ/ReplicaExchangeTutorial.jl/actions/workflows/CI.yml)
 
+**Site:** https://lp-iq.github.io/ReplicaExchangeTutorial.jl/ · tutorial em [português](docs/tutorial.md) e em [English](docs/tutorial_en.md)
+
+> **English:** an interactive Julia GUI and tutorial on temperature replica exchange molecular dynamics (T-REMD). Install with `pkg> add ReplicaExchangeTutorial`, start Julia with `julia -t auto` and run `using ReplicaExchangeTutorial; remd_gui()`. The full tutorial in English is in [docs/tutorial_en.md](docs/tutorial_en.md) and on the [website](https://lp-iq.github.io/ReplicaExchangeTutorial.jl/tutorial-en.html).
+
 Tutorial sobre **Replica Exchange Molecular Dynamics (T-REMD)**: quais são os parâmetros de controle do método, como cada um afeta a amostragem e o que variar quando a amostragem falha.
 
 A ferramenta do tutorial é uma interface gráfica interativa em Julia (`remd_gui()`) que roda um REMD num sistema simples, um fluido de Lennard-Jones em 2D, e mostra o efeito de cada parâmetro nos gráficos. Inspirada na interface do [FundamentosDMC.jl](https://github.com/m3g/FundamentosDMC.jl).
@@ -11,6 +15,8 @@ A ferramenta do tutorial é uma interface gráfica interativa em Julia (`remd_gu
 | Arquivo | O que é |
 | --- | --- |
 | [docs/tutorial.md](docs/tutorial.md) | O tutorial completo: teoria, instalação, visita guiada à GUI, nove testes passo a passo, diagnóstico e relação com simulações moleculares |
+| [docs/tutorial_en.md](docs/tutorial_en.md) | O mesmo tutorial em inglês |
+| `site/` | Página do projeto (GitHub Pages), gerada a partir dos tutoriais por `site/build.sh` |
 | `src/simulacao.jl` | Núcleo da simulação: Lennard-Jones 2D, Langevin e critério de troca |
 | `src/interface.jl` | A GUI usada nos testes |
 | `test/runtests.jl` | Testes do núcleo (forças, termostato, critério de troca) |
@@ -44,12 +50,6 @@ Requer [Julia](https://julialang.org/downloads/) 1.10 ou mais recente e suporte 
 
 ```julia
 pkg> add ReplicaExchangeTutorial
-```
-
-Enquanto o registro no General não estiver disponível, instale pela URL:
-
-```julia
-pkg> add https://github.com/LP-IQ/ReplicaExchangeTutorial.jl
 ```
 
 ## Uso

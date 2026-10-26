@@ -12,6 +12,8 @@ Os tópicos são:
 
 Pré-requisitos: noções de dinâmica molecular (integração, termostato, energia potencial) e do ensemble canônico. Não é preciso conhecer Julia.
 
+*[Read this tutorial in English](tutorial_en.md).*
+
 Na seção 9, os testes 1, 2 (com 2 réplicas), 8 e 9 foram rodados na GUI (semente 42, 20 000 passos) e têm os resultados marcados como *observado*, com as figuras salvas pela própria interface. Nos demais, os resultados marcados como *esperado* são previsões que devem ser conferidas. Os valores numéricos variam com a semente e com a duração da corrida.
 
 ## Sumário
@@ -206,12 +208,6 @@ pkg> add ReplicaExchangeTutorial
 
 Isso instala o pacote e o GLMakie, com suas dependências, e compila tudo. Demora alguns minutos. Aperte Backspace para voltar ao REPL normal.
 
-Se o comando acima disser que o pacote não foi encontrado, instale direto do GitHub:
-
-```julia
-pkg> add https://github.com/LP-IQ/ReplicaExchangeTutorial.jl
-```
-
 ### 5.3 Abrir a GUI
 
 Inicie o Julia com uma thread por núcleo e abra a interface:
@@ -372,6 +368,8 @@ Um dos painéis tem **moldura magenta grossa**: é o estado que contém, naquele
 | Trocas entre walkers | walker × walker | Fração do total de trocas aceitas que ocorreu entre aqueles dois walkers | 1/[R(R−1)/2] em todas |
 
 No mapa "Taxa de troca (kT)", só as células vizinhas à diagonal ficam preenchidas, porque só estados vizinhos tentam trocar.
+
+A barra de cores ao lado de cada mapa é a legenda. No mapa de ocupação a escala vai de 0 a 2/R, então o valor ideal 1/R fica no meio da barra: um mapa em azul médio uniforme indica boa circulação.
 
 ### 6.4 Cores
 
@@ -906,7 +904,6 @@ Reset ou uma nova equilibração apagam os frames acumulados. O limite é de 50 
 | --- | --- |
 | Windows: "julia" não é reconhecido como comando | O Julia não está no PATH. Reabra o terminal depois de instalar; com o instalador de julialang.org, marque a opção "Add Julia to PATH" |
 | Windows: a janela da GUI não abre (erro de OpenGL) | O GLMakie exige OpenGL 3.3. Atualize o driver da placa de vídeo; em área de trabalho remota ou máquina virtual pode não haver suporte |
-| `pkg> add ReplicaExchangeTutorial` diz que o pacote não existe | Instale pela URL: `pkg> add https://github.com/LP-IQ/ReplicaExchangeTutorial.jl` (seção 5.2) |
 | A janela demora muito a abrir na primeira vez | Normal: o Julia está compilando o GLMakie. As próximas aberturas são mais rápidas |
 | Mudei kTs (ou n, L) e nada mudou | Esses campos só valem depois de Reset ou do botão 1 |
 | Digitei um valor e ele não foi aceito | Pressione Enter depois de digitar. Use ponto como separador decimal |

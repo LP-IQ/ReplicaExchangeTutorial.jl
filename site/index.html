@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="pt-BR" data-lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ReplicaExchangeTutorial.jl: T-REMD interativo em Julia</title>
+<meta name="titulo-pt" content="ReplicaExchangeTutorial.jl: T-REMD interativo em Julia">
+<meta name="titulo-en" content="ReplicaExchangeTutorial.jl: interactive T-REMD in Julia">
+<meta name="description" content="Interactive Julia GUI and tutorial for temperature replica exchange molecular dynamics (T-REMD). Interface gráfica e tutorial de REMD em temperatura.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script>
+  // tema e idioma antes de desenhar a página, para não piscar
+  (function () {
+    var r = document.documentElement, t, l;
+    try { t = localStorage.getItem("tema"); l = localStorage.getItem("idioma"); } catch (e) {}
+    if (t) r.dataset.theme = t;
+    if (!l) l = (navigator.language || "pt").toLowerCase().indexOf("pt") === 0 ? "pt" : "en";
+    r.dataset.lang = l; r.lang = l === "pt" ? "pt-BR" : "en";
+  })();
+</script>
+</head>
+<body>
+
+<header class="topo">
+  <div class="container">
+    <a class="marca" href="./">
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+        <line x1="5" y1="7" x2="27" y2="7" stroke="#ff5d4d" stroke-width="3" stroke-linecap="round"/>
+        <line x1="5" y1="13" x2="27" y2="13" stroke="#f5a524" stroke-width="3" stroke-linecap="round"/>
+        <line x1="5" y1="19" x2="27" y2="19" stroke="#2cc7d9" stroke-width="3" stroke-linecap="round"/>
+        <line x1="5" y1="25" x2="27" y2="25" stroke="#4f8cff" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="12" cy="19" r="3.6" fill="#e8473a"/>
+        <circle cx="21" cy="13" r="3.6" class="walker outro"/>
+      </svg>
+      <span>ReplicaExchangeTutorial<span class="jl">.jl</span></span>
+    </a>
+    <nav class="menu" aria-label="Menu">
+      <a href="#aprender"><span lang="pt-BR">O que você aprende</span><span lang="en">What you learn</span></a>
+      <a href="#instalar"><span lang="pt-BR">Instalar</span><span lang="en">Install</span></a>
+      <a href="tutorial.html" lang="pt-BR">Tutorial</a>
+      <a href="tutorial-en.html" lang="en">Tutorial</a>
+      <a href="https://github.com/LP-IQ/ReplicaExchangeTutorial.jl">GitHub</a>
+    </nav>
+    <div class="acoes">
+      <div class="seletor-idioma" role="group" aria-label="Idioma / Language">
+        <button type="button" data-idioma="pt" aria-pressed="true" title="Português">PT</button>
+        <button type="button" data-idioma="en" aria-pressed="false" title="English">EN</button>
+      </div>
+      <button class="botao-tema" type="button" aria-label="Tema claro ou escuro / Light or dark theme">
+        <svg class="sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg class="lua" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<section class="hero">
+  <div class="container">
+    <div>
+      <span class="sobretitulo"><span lang="pt-BR">Pacote Julia · tutorial interativo</span><span lang="en">Julia package · interactive tutorial</span></span>
+      <h1>
+        <span lang="pt-BR">Replica Exchange MD, <span class="grad">um parâmetro de cada vez</span></span>
+        <span lang="en">Replica exchange MD, <span class="grad">one parameter at a time</span></span>
+      </h1>
+      <p class="lead" lang="pt-BR">Uma interface gráfica que roda T-REMD num fluido de Lennard-Jones 2D e mostra, enquanto a simulação anda, como a escada de temperaturas, a frequência de troca e o tamanho do sistema mudam a amostragem. Vem com um tutorial de nove testes guiados.</p>
+      <p class="lead" lang="en">A graphical interface that runs T-REMD on a 2D Lennard-Jones fluid and shows, while the simulation runs, how the temperature ladder, the exchange frequency and the system size change the sampling. It comes with a tutorial of nine guided tests.</p>
+      <div class="botoes">
+        <a class="botao primario" href="tutorial.html" lang="pt-BR">Começar o tutorial
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <a class="botao primario" href="tutorial-en.html" lang="en">Start the tutorial
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <a class="botao secundario" href="https://github.com/LP-IQ/ReplicaExchangeTutorial.jl">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.6 22.4c.6.1.8-.3.8-.6v-2c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.2 1.2a11 11 0 0 1 5.8 0C17.3 4.8 18.3 5 18.3 5c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.9 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.2c0 .3.2.7.8.6A11.5 11.5 0 0 0 12 .5z"/></svg>
+          <span lang="pt-BR">Código no GitHub</span><span lang="en">Code on GitHub</span></a>
+      </div>
+      <div class="comando"><span class="prompt">pkg&gt;</span><code>add ReplicaExchangeTutorial</code></div>
+    </div>
+    <figure class="figura-escada">
+      <svg class="animada" viewBox="0 0 400 320" role="img" aria-labelledby="escada-titulo">
+<title id="escada-titulo">Escada de temperaturas: a configuração vermelha sobe e desce trocando com as vizinhas / Temperature ladder: the red configuration climbs and descends by swapping with its neighbors</title>
+<defs><linearGradient id="eixo" x1="0" y1="1" x2="0" y2="0"><stop offset="0.00" stop-color="#4f8cff"/><stop offset="0.20" stop-color="#2aa6ee"/><stop offset="0.40" stop-color="#2cc7d9"/><stop offset="0.60" stop-color="#a9bf45"/><stop offset="0.80" stop-color="#f5a524"/><stop offset="1.00" stop-color="#ff5d4d"/></linearGradient></defs>
+<rect x="44" y="34" width="4" height="252" rx="2" fill="url(#eixo)"/>
+<line x1="70" y1="280" x2="372" y2="280" stroke="#4f8cff" stroke-width="3" stroke-linecap="round" opacity=".85"/>
+<text class="degrau-rotulo" x="6" y="284">kT<tspan dy="4" font-size="9">1</tspan></text>
+<line x1="70" y1="232" x2="372" y2="232" stroke="#2aa6ee" stroke-width="3" stroke-linecap="round" opacity=".85"/>
+<text class="degrau-rotulo" x="6" y="236">kT<tspan dy="4" font-size="9">2</tspan></text>
+<line x1="70" y1="184" x2="372" y2="184" stroke="#2cc7d9" stroke-width="3" stroke-linecap="round" opacity=".85"/>
+<text class="degrau-rotulo" x="6" y="188">kT<tspan dy="4" font-size="9">3</tspan></text>
+<line x1="70" y1="136" x2="372" y2="136" stroke="#a9bf45" stroke-width="3" stroke-linecap="round" opacity=".85"/>
+<text class="degrau-rotulo" x="6" y="140">kT<tspan dy="4" font-size="9">4</tspan></text>
+<line x1="70" y1="88" x2="372" y2="88" stroke="#f5a524" stroke-width="3" stroke-linecap="round" opacity=".85"/>
+<text class="degrau-rotulo" x="6" y="92">kT<tspan dy="4" font-size="9">5</tspan></text>
+<line x1="70" y1="40" x2="372" y2="40" stroke="#ff5d4d" stroke-width="3" stroke-linecap="round" opacity=".85"/>
+<text class="degrau-rotulo" x="6" y="44">kT<tspan dy="4" font-size="9">6</tspan></text>
+<circle class="walker" cx="205" cy="280" r="11" fill="#e8473a"><animate attributeName="cy" dur="12.6s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0476;0.0754;0.1429;0.1706;0.2381;0.2659;0.3333;0.3611;0.4286;0.4563;0.5238;0.5516;0.6190;0.6468;0.7143;0.7421;0.8095;0.8373;0.9048;0.9325;1.0000" values="280;280;232;232;184;184;136;136;88;88;40;40;88;88;136;136;184;184;232;232;280;280"/></circle>
+<circle class="walker outro" cx="120" cy="232" r="9"><animate attributeName="cy" dur="12.6s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0476;0.0754;0.1429;0.1706;0.2381;0.2659;0.3333;0.3611;0.4286;0.4563;0.5238;0.5516;0.6190;0.6468;0.7143;0.7421;0.8095;0.8373;0.9048;0.9325;1.0000" values="232;232;280;280;280;280;280;280;280;280;280;280;280;280;280;280;280;280;280;280;232;232"/></circle>
+<circle class="walker outro" cx="290" cy="184" r="9"><animate attributeName="cy" dur="12.6s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0476;0.0754;0.1429;0.1706;0.2381;0.2659;0.3333;0.3611;0.4286;0.4563;0.5238;0.5516;0.6190;0.6468;0.7143;0.7421;0.8095;0.8373;0.9048;0.9325;1.0000" values="184;184;184;184;232;232;232;232;232;232;232;232;232;232;232;232;232;232;184;184;184;184"/></circle>
+<circle class="walker outro" cx="160" cy="136" r="9"><animate attributeName="cy" dur="12.6s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0476;0.0754;0.1429;0.1706;0.2381;0.2659;0.3333;0.3611;0.4286;0.4563;0.5238;0.5516;0.6190;0.6468;0.7143;0.7421;0.8095;0.8373;0.9048;0.9325;1.0000" values="136;136;136;136;136;136;184;184;184;184;184;184;184;184;184;184;136;136;136;136;136;136"/></circle>
+<circle class="walker outro" cx="330" cy="88" r="9"><animate attributeName="cy" dur="12.6s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0476;0.0754;0.1429;0.1706;0.2381;0.2659;0.3333;0.3611;0.4286;0.4563;0.5238;0.5516;0.6190;0.6468;0.7143;0.7421;0.8095;0.8373;0.9048;0.9325;1.0000" values="88;88;88;88;88;88;88;88;136;136;136;136;136;136;88;88;88;88;88;88;88;88"/></circle>
+<circle class="walker outro" cx="250" cy="40" r="9"><animate attributeName="cy" dur="12.6s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0476;0.0754;0.1429;0.1706;0.2381;0.2659;0.3333;0.3611;0.4286;0.4563;0.5238;0.5516;0.6190;0.6468;0.7143;0.7421;0.8095;0.8373;0.9048;0.9325;1.0000" values="40;40;40;40;40;40;40;40;40;40;88;88;40;40;40;40;40;40;40;40;40;40"/></circle>
+</svg>
+      <figcaption>
+        <span lang="pt-BR">A configuração vermelha sobe a escada trocando de lugar com as vizinhas e volta ao kT mais frio: um <i>round trip</i>.</span>
+        <span lang="en">The red configuration climbs the ladder by swapping places with its neighbors and returns to the coldest kT: one round trip.</span>
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="bloco alt" id="janela">
+  <div class="container">
+    <div class="cabecalho-bloco">
+      <span class="sobretitulo"><span lang="pt-BR">A interface</span><span lang="en">The interface</span></span>
+      <h2><span lang="pt-BR">Tudo o que o método faz, na mesma janela</span><span lang="en">Everything the method does, in one window</span></h2>
+      <p lang="pt-BR">Controles à esquerda, gráficos de diagnóstico no centro e as réplicas à direita, do kT mais frio ao mais quente. Cada troca aceita aparece na hora: duas configurações mudam de painel.</p>
+      <p lang="en">Controls on the left, diagnostic plots in the center and the replicas on the right, from the coldest to the hottest kT. Every accepted swap shows up right away: two configurations change panels.</p>
+    </div>
+    <figure class="janela">
+      <div class="barra" aria-hidden="true"><i></i><i></i><i></i></div>
+      <img src="figs/teste1_janela.png" width="1849" height="1044" loading="lazy"
+           alt="Janela da GUI ao fim de uma corrida com 6 réplicas / GUI window at the end of a run with 6 replicas">
+      <figcaption>
+        <span lang="pt-BR">Teste 1 do tutorial: 6 réplicas entre kT = 0,55 e 0,86, ao fim de 20 000 passos.</span>
+        <span lang="en">Tutorial test 1: 6 replicas between kT = 0.55 and 0.86, after 20 000 steps.</span>
+      </figcaption>
+    </figure>
+    <dl class="paineis">
+      <div><dt>Random walk</dt><dd lang="pt-BR">Cada configuração percorre todos os kT?</dd><dd lang="en">Does each configuration visit every kT?</dd></div>
+      <div><dt lang="pt-BR">Energia por réplica</dt><dt lang="en">Energy per replica</dt><dd lang="pt-BR">O sistema equilibrou? As réplicas se separam por temperatura?</dd><dd lang="en">Has the system equilibrated? Do replicas separate by temperature?</dd></div>
+      <div><dt>P(U)</dt><dd lang="pt-BR">As distribuições de energia de kT vizinhos se sobrepõem?</dd><dd lang="en">Do the energy distributions of neighboring kT overlap?</dd></div>
+      <div><dt lang="pt-BR">Mapa de ocupação</dt><dt lang="en">Occupancy map</dt><dd lang="pt-BR">Quanto tempo cada walker passou em cada kT?</dd><dd lang="en">How long did each walker spend at each kT?</dd></div>
+      <div><dt lang="pt-BR">Taxa de troca</dt><dt lang="en">Exchange rate</dt><dd lang="pt-BR">Qual par de temperaturas é o gargalo?</dd><dd lang="en">Which pair of temperatures is the bottleneck?</dd></div>
+      <div><dt lang="pt-BR">Trocas entre walkers</dt><dt lang="en">Swaps between walkers</dt><dd lang="pt-BR">Há grupos de configurações que nunca se misturam?</dd><dd lang="en">Are there groups of configurations that never mix?</dd></div>
+    </dl>
+  </div>
+</section>
+
+<section class="bloco" id="aprender">
+  <div class="container">
+    <div class="cabecalho-bloco">
+      <span class="sobretitulo"><span lang="pt-BR">O que você aprende</span><span lang="en">What you learn</span></span>
+      <h2><span lang="pt-BR">Da ideia do método ao diagnóstico de uma escada ruim</span><span lang="en">From the idea of the method to diagnosing a bad ladder</span></h2>
+    </div>
+    <div class="grade c4">
+      <article class="cartao" style="--c: var(--cold)">
+        <span class="num">01</span>
+        <h3><span lang="pt-BR">Por que trocar</span><span lang="en">Why swap</span></h3>
+        <p lang="pt-BR">Réplicas quentes cruzam barreiras. As trocas levam essas configurações até a temperatura de interesse sem mudar o ensemble de nenhum estado.</p>
+        <p lang="en">Hot replicas cross barriers. Swaps carry those configurations down to the temperature of interest without changing the ensemble of any state.</p>
+      </article>
+      <article class="cartao" style="--c: var(--cool)">
+        <span class="num">02</span>
+        <h3><span lang="pt-BR">Como montar a escada</span><span lang="en">How to build the ladder</span></h3>
+        <p lang="pt-BR">Sobreposição de P(U), espaçamento geométrico e por que o número de réplicas cresce com √n.</p>
+        <p lang="en">P(U) overlap, geometric spacing and why the number of replicas grows as √n.</p>
+      </article>
+      <article class="cartao" style="--c: var(--warm)">
+        <span class="num">03</span>
+        <h3><span lang="pt-BR">Como ler os gráficos</span><span lang="en">How to read the plots</span></h3>
+        <p lang="pt-BR">Taxa de troca, round trips, ocupação e random walk: o que cada um mostra e o que nenhum mostra sozinho.</p>
+        <p lang="en">Exchange rate, round trips, occupancy and random walk: what each one shows and what none of them shows alone.</p>
+      </article>
+      <article class="cartao" style="--c: var(--hot)">
+        <span class="num">04</span>
+        <h3><span lang="pt-BR">O que fazer quando falha</span><span lang="en">What to do when it fails</span></h3>
+        <p lang="pt-BR">Gargalos, transições de fase e falta de equilíbrio, com uma tabela que liga cada sintoma ao parâmetro a mudar.</p>
+        <p lang="en">Bottlenecks, phase transitions and lack of equilibrium, with a table that links each symptom to the parameter to change.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="bloco alt" id="testes">
+  <div class="container">
+    <div class="cabecalho-bloco">
+      <span class="sobretitulo"><span lang="pt-BR">Resultados reais da GUI</span><span lang="en">Real results from the GUI</span></span>
+      <h2><span lang="pt-BR">Nove testes, um parâmetro por vez</span><span lang="en">Nine tests, one parameter at a time</span></h2>
+      <p lang="pt-BR">Cada teste já vem pronto no menu da interface. Abaixo, três deles, com as figuras salvas pela própria GUI.</p>
+      <p lang="en">Every test is ready to load from the interface menu. Below are three of them, with figures saved by the GUI itself.</p>
+    </div>
+    <div class="grade c3 galeria">
+      <figure>
+        <img src="figs/teste1_mapa_ocupacao.png" alt="Mapa de ocupação com 6 réplicas / Occupancy map with 6 replicas" loading="lazy">
+        <figcaption>
+          <span lang="pt-BR"><b>Teste 1: referência</b>Cada configuração passa um tempo parecido em cada kT, perto do ideal de 1/6, e são 45 round trips em 20 000 passos.</span>
+          <span lang="en"><b>Test 1: reference</b>Each configuration spends a similar time at each kT, close to the ideal 1/6, with 45 round trips in 20 000 steps.</span>
+        </figcaption>
+      </figure>
+      <figure>
+        <img src="figs/teste2_P_U_2replicas.png" alt="P(U) com 2 réplicas / P(U) with 2 replicas" loading="lazy">
+        <figcaption>
+          <span lang="pt-BR"><b>Teste 2: poucas réplicas</b>Com duas temperaturas distantes, as P(U) quase não se sobrepõem e só 4 % das trocas são aceitas.</span>
+          <span lang="en"><b>Test 2: too few replicas</b>With two distant temperatures, the P(U) barely overlap and only 4 % of the swaps are accepted.</span>
+        </figcaption>
+      </figure>
+      <figure>
+        <img src="figs/teste9_mapa_trocas_walkers.png" alt="Trocas entre walkers no teste 9 / Swaps between walkers in test 9" loading="lazy">
+        <figcaption>
+          <span lang="pt-BR"><b>Teste 9: uma transição de fase</b>A escada atravessa a condensação, um par quase não troca e os walkers se dividem em dois blocos.</span>
+          <span lang="en"><b>Test 9: a phase transition</b>The ladder crosses condensation, one pair barely swaps and the walkers split into two blocks.</span>
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section class="bloco" id="roteiro">
+  <div class="container">
+    <div class="cabecalho-bloco">
+      <span class="sobretitulo"><span lang="pt-BR">Roteiro</span><span lang="en">Roadmap</span></span>
+      <h2><span lang="pt-BR">Como o tutorial está organizado</span><span lang="en">How the tutorial is organized</span></h2>
+    </div>
+    <ol class="roteiro">
+      <li style="--c: var(--cold)">
+        <span class="secoes"><span lang="pt-BR">seções 1–4</span><span lang="en">sections 1–4</span></span>
+        <div>
+          <h3><a href="tutorial.html#1-o-problema-que-o-remd-resolve" lang="pt-BR">Teoria</a><a href="tutorial-en.html#1-the-problem-remd-solves" lang="en">Theory</a></h3>
+          <p lang="pt-BR">O problema das barreiras, a ideia do método, de onde vem o critério de troca e o sistema-modelo da GUI.</p>
+          <p lang="en">The barrier problem, the idea of the method, where the exchange criterion comes from and the model system in the GUI.</p>
+        </div>
+      </li>
+      <li style="--c: var(--cool)">
+        <span class="secoes"><span lang="pt-BR">seções 5–7</span><span lang="en">sections 5–7</span></span>
+        <div>
+          <h3><a href="tutorial.html#5-instalação-e-primeira-execução" lang="pt-BR">Primeiros passos</a><a href="tutorial-en.html#5-installation-and-first-run" lang="en">First steps</a></h3>
+          <p lang="pt-BR">Instalação, uma visita guiada à janela e a primeira simulação, passo a passo.</p>
+          <p lang="en">Installation, a guided tour of the window and the first simulation, step by step.</p>
+        </div>
+      </li>
+      <li style="--c: #8fbf3f">
+        <span class="secoes"><span lang="pt-BR">seção 8</span><span lang="en">section 8</span></span>
+        <div>
+          <h3><a href="tutorial.html#8-os-parâmetros-de-controle" lang="pt-BR">Os parâmetros de controle</a><a href="tutorial-en.html#8-the-control-parameters" lang="en">The control parameters</a></h3>
+          <p lang="pt-BR">Escada, tamanho do sistema, dt, atrito, frequência de troca, equilibração e duração da corrida.</p>
+          <p lang="en">Ladder, system size, dt, friction, exchange frequency, equilibration and run length.</p>
+        </div>
+      </li>
+      <li style="--c: var(--warm)">
+        <span class="secoes"><span lang="pt-BR">seções 9–10</span><span lang="en">sections 9–10</span></span>
+        <div>
+          <h3><a href="tutorial.html#9-testes" lang="pt-BR">Testes e diagnóstico</a><a href="tutorial-en.html#9-tests" lang="en">Tests and diagnosis</a></h3>
+          <p lang="pt-BR">Nove testes guiados e uma tabela que vai do sintoma visto na tela ao parâmetro que deve mudar.</p>
+          <p lang="en">Nine guided tests and a table that goes from the symptom on screen to the parameter that should change.</p>
+        </div>
+      </li>
+      <li style="--c: var(--hot)">
+        <span class="secoes"><span lang="pt-BR">seção 11</span><span lang="en">section 11</span></span>
+        <div>
+          <h3><a href="tutorial.html#11-da-gui-para-uma-simulação-molecular" lang="pt-BR">Da GUI para uma simulação molecular</a><a href="tutorial-en.html#11-from-the-gui-to-a-molecular-simulation" lang="en">From the GUI to a molecular simulation</a></h3>
+          <p lang="pt-BR">Cada parâmetro da GUI no GROMACS, o custo do solvente e quando partir para o REST2.</p>
+          <p lang="en">Each GUI parameter in GROMACS, the cost of the solvent and when to switch to REST2.</p>
+        </div>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<section class="bloco alt" id="instalar">
+  <div class="container">
+    <div class="cabecalho-bloco">
+      <span class="sobretitulo"><span lang="pt-BR">Instalar e rodar</span><span lang="en">Install and run</span></span>
+      <h2><span lang="pt-BR">Três passos até a primeira troca</span><span lang="en">Three steps to the first swap</span></h2>
+      <p lang="pt-BR">Requer Julia 1.10 ou mais recente e suporte a OpenGL 3.3.</p>
+      <p lang="en">Requires Julia 1.10 or newer and OpenGL 3.3 support.</p>
+    </div>
+    <div class="grade c3 passos">
+      <div class="passo" style="--c: var(--cold)">
+        <h3><span lang="pt-BR">Instale o pacote</span><span lang="en">Install the package</span></h3>
+        <p lang="pt-BR">No REPL do Julia, aperte <code>]</code> e digite:</p>
+        <p lang="en">In the Julia REPL, press <code>]</code> and type:</p>
+        <pre><code>pkg&gt; add ReplicaExchangeTutorial</code></pre>
+      </div>
+      <div class="passo" style="--c: var(--cool)">
+        <h3><span lang="pt-BR">Abra a interface</span><span lang="en">Open the interface</span></h3>
+        <p lang="pt-BR">Inicie o Julia com <code>julia -t auto</code>, uma thread por réplica:</p>
+        <p lang="en">Start Julia with <code>julia -t auto</code>, one thread per replica:</p>
+        <pre><code>julia&gt; using ReplicaExchangeTutorial
+julia&gt; remd_gui()</code></pre>
+      </div>
+      <div class="passo" style="--c: var(--hot)">
+        <h3><span lang="pt-BR">Siga um teste</span><span lang="en">Follow a test</span></h3>
+        <p lang="pt-BR">Escolha um teste no menu <b>Teste</b>, clique em <b>1. Minimizar + Equilibrar</b> e depois em <b>2. Run</b>.</p>
+        <p lang="en">Pick a test in the <b>Teste</b> menu, click <b>1. Minimizar + Equilibrar</b> (minimize and equilibrate) and then <b>2. Run</b>.</p>
+      </div>
+    </div>
+    <p class="nota" lang="pt-BR">No Windows, ou para rodar a partir do repositório clonado, veja a <a href="tutorial.html#5-instalação-e-primeira-execução">seção 5 do tutorial</a>. Os rótulos da interface estão em português.</p>
+    <p class="nota" lang="en">On Windows, or to run from a cloned repository, see <a href="tutorial-en.html#5-installation-and-first-run">section 5 of the tutorial</a>. The interface labels are in Portuguese; the English tutorial translates each one.</p>
+  </div>
+</section>
+
+<section class="bloco" id="modelo">
+  <div class="container modelo">
+    <div>
+      <span class="sobretitulo"><span lang="pt-BR">O modelo</span><span lang="en">The model</span></span>
+      <h2><span lang="pt-BR">Simples de propósito</span><span lang="en">Simple on purpose</span></h2>
+      <ul lang="pt-BR">
+        <li>Partículas de Lennard-Jones em 2D, caixa periódica, sem raio de corte.</li>
+        <li>Dinâmica de Langevin com o integrador BAOAB, uma réplica por thread.</li>
+        <li>Trocas entre kT vizinhos, alternando os pares 1-2, 3-4… e 2-3, 4-5…, como no GROMACS.</li>
+        <li>Velocidades reescaladas por √(kT novo / kT antigo) a cada troca aceita.</li>
+        <li>Unidades reduzidas: massa 1, energia em ε, temperatura como kT.</li>
+      </ul>
+      <ul lang="en">
+        <li>Lennard-Jones particles in 2D, periodic box, no cutoff.</li>
+        <li>Langevin dynamics with the BAOAB integrator, one replica per thread.</li>
+        <li>Swaps between neighboring kT, alternating pairs 1-2, 3-4… and 2-3, 4-5…, as in GROMACS.</li>
+        <li>Velocities rescaled by √(kT new / kT old) at every accepted swap.</li>
+        <li>Reduced units: mass 1, energy in ε, temperature as kT.</li>
+      </ul>
+    </div>
+    <div class="formula">
+      <span class="rotulo"><span lang="pt-BR">Critério de troca</span><span lang="en">Exchange criterion</span></span>
+      <div class="equacao"><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>P</mi><mtext mathvariant="normal">acc</mtext></msub><mo>=</mo><mo>min</mo><mrow><mo stretchy="true" form="prefix">{</mo><mn>1</mn><mo>,</mo><mspace width="0.222em"></mspace><mo>exp</mo><mrow><mo stretchy="true" form="prefix">[</mo><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>β</mi><mi>i</mi></msub><mo>−</mo><msub><mi>β</mi><mi>j</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>U</mi><mi>i</mi></msub><mo>−</mo><msub><mi>U</mi><mi>j</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo stretchy="true" form="postfix">]</mo></mrow><mo stretchy="true" form="postfix">}</mo></mrow></mrow><annotation encoding="application/x-tex">P_{\text{acc}} = \min\left\{1,\ \exp\left[\left(\beta_i - \beta_j\right)\left(U_i - U_j\right)\right]\right\}</annotation></semantics></math></div>
+      <span class="rotulo"><span lang="pt-BR">Escada geométrica</span><span lang="en">Geometric ladder</span></span>
+      <div class="equacao"><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi><msub><mi>T</mi><mi>i</mi></msub><mo>=</mo><mi>k</mi><msub><mi>T</mi><mo>min</mo></msub><msup><mrow><mo stretchy="true" form="prefix">(</mo><mfrac><mrow><mi>k</mi><msub><mi>T</mi><mo>max</mo></msub></mrow><mrow><mi>k</mi><msub><mi>T</mi><mo>min</mo></msub></mrow></mfrac><mo stretchy="true" form="postfix">)</mo></mrow><mfrac><mrow><mi>i</mi><mo>−</mo><mn>1</mn></mrow><mrow><mi>R</mi><mo>−</mo><mn>1</mn></mrow></mfrac></msup></mrow><annotation encoding="application/x-tex">kT_i = kT_{\min}\left(\frac{kT_{\max}}{kT_{\min}}\right)^{\frac{i-1}{R-1}}</annotation></semantics></math></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="rodape">
+  <div class="container">
+    <div>
+      <p><b style="color:var(--text)">ReplicaExchangeTutorial.jl</b></p>
+      <p>Lucas Avila Pinheiro · Eduard D. S. Mourão</p>
+      <p lang="pt-BR">Instituto de Química, UNICAMP</p>
+      <p lang="en">Institute of Chemistry, UNICAMP (Brazil)</p>
+    </div>
+    <div>
+      <p lang="pt-BR">Interface inspirada no <a href="https://github.com/m3g/FundamentosDMC.jl">FundamentosDMC.jl</a>.</p>
+      <p lang="en">Interface inspired by <a href="https://github.com/m3g/FundamentosDMC.jl">FundamentosDMC.jl</a>.</p>
+      <p lang="pt-BR">Código sob licença <a href="https://github.com/LP-IQ/ReplicaExchangeTutorial.jl/blob/main/LICENSE">MIT</a>.</p>
+      <p lang="en">Code under the <a href="https://github.com/LP-IQ/ReplicaExchangeTutorial.jl/blob/main/LICENSE">MIT</a> license.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="site.js"></script>
+</body>
+</html>
