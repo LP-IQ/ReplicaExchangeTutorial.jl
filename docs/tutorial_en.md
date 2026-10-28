@@ -271,7 +271,7 @@ To open the trajectory in VMD, see section 12.2.
 
 The window has three columns: controls on the left, plots in the center and replicas on the right. There is also a message line at the bottom.
 
-![GUI window at the end of a run with 6 replicas](figs/teste1_janela.png)
+![GUI window during test 1 (step 10 360 of 20 000), with the g(r) plot selected](figs/teste1_janela.png)
 
 ### 6.1 Left column: controls
 
@@ -290,6 +290,7 @@ The window has three columns: controls on the left, plots in the center and repl
 | troca a cada (passos) (exchange every, steps) | 50 | Dynamics steps between two rounds of exchange attempts |
 | pausa se trocou (s) (pause on swap) | 0.3 | Time the screen freezes when a swap is accepted (display only) |
 | equilibração (equilibration) | 2000 | Steps without swaps run by button 1 |
+| kT inicial (× alvo) (initial kT, × target) | 1.0 | Initial velocities are drawn at this multiple of the kT of each state. Use 2 to start hot and watch the thermostat bring the temperature back (test 10) |
 | gamma (1/τ do termostato) (1/τ of the thermostat) | 0.1 | For Langevin, the friction coefficient. For the other thermostats, the inverse of the coupling time τ |
 | epsilon (poço LJ) (LJ well) | 1.0 | Depth of the Lennard-Jones well |
 | sigma (diâmetro LJ) (LJ diameter) | 2.0 | Particle diameter |
@@ -303,7 +304,7 @@ The window has three columns: controls on the left, plots in the center and repl
 | --- | --- |
 | kTs, n, L, epsilon, sigma, seed, thermostat | Only after clicking Reset or button 1 (the system is rebuilt) |
 | dt, gamma, nsteps, exchange interval, pause | At the next click on Run |
-| equilibration | At the next click on button 1 |
+| equilibration, initial kT | At the next click on button 1 |
 
 **Menus and switch**
 
@@ -313,7 +314,7 @@ The window has three columns: controls on the left, plots in the center and repl
 | Teste (Test) | "1: referência" to "10d: sem termostato" | Fills the fields with the settings of a test from section 9 |
 | Cores (Colors) | "Destaque" (Highlight) / "Colorido" (Colorful) | How walkers are painted (section 6.4) |
 | Mapa (Map) | "Ocupação" (Occupancy) / "Menor energia" (Lowest energy) / "Taxa de troca (kT)" (Exchange rate) / "Trocas entre walkers" (Swaps between walkers) | Which map appears in the lower right panel of the center column (section 6.3) |
-| Gráfico (Plot) | "P(U)" / "g(r)" / "kT instantâneo" (instantaneous kT) | What appears in the middle right panel (section 6.3) |
+| Gráfico (Plot) | "P(U)" / "g(r)" / "kT instantâneo" (instantaneous kT) / "kT no tempo" (kT over time) | What appears in the middle right panel (section 6.3) |
 | menor U no random walk (lowest U in the random walk) | on / off | Shows, in the random walk, which kT held the lowest-energy configuration; with the switch on, the walker lines are drawn lighter so these points stand out |
 
 **Buttons**
@@ -360,11 +361,18 @@ One of the panels has a **thick magenta frame**: it is the state that holds, at 
 - The curves of the two ends of the ladder are thicker.
 - The title shows the mean U at the lowest and at the highest kT.
 
-**P(U), g(r) or kT instantâneo** (instantaneous kT, middle right). The "Gráfico" (Plot) menu chooses what is shown. In all three cases there is one curve per state, with the same colors, accumulated only during Run.
+**P(U), g(r), kT instantâneo or kT no tempo** (instantaneous kT, kT over time; middle right). The "Gráfico" (Plot) menu chooses what is shown. All of them have one curve per state, with the same colors. The first three are accumulated only during Run; kT over time includes the equilibration.
 
 - **P(U)**: the potential energy histogram. It shows directly the overlap that controls the exchange rate.
 - **g(r)**: the radial distribution function, the probability of finding a particle at distance r from another, relative to an ideal gas of the same density. g(r) = 1 is the dashed line; the dotted line marks the potential minimum, r = 2^(1/6) σ. High peaks indicate clusters. This is the structural observable of the GUI.
 - **kT instantâneo**: the histogram of 2K/n_f, the temperature computed from the kinetic energy K, with n_f degrees of freedom. The dashed curves are the distribution expected in the canonical ensemble. Use it to judge the thermostat (section 8.3).
+- **kT no tempo** (kT over time): the instantaneous kT of each state along the simulation, with the target kT dashed in the same color. It shows the thermostat at work: the band in which it keeps the temperature and, when starting hot ("kT inicial" field), how it brings it back.
+
+The two temperature plots in test 1 (Langevin, step 10 360). In the histogram, the measured curves follow the dashed canonical ones; the mean was 0.545 at the lowest kT (target 0.550) and 0.864 at the highest (target 0.860). In the time series, each state fluctuates around its target in a band of about ±10 %, the canonical value for 2n = 200 degrees of freedom (√(2/200) = 0.10).
+
+| Instantaneous kT | kT over time |
+| --- | --- |
+| ![Instantaneous kT histogram with Langevin](figs/teste1_kT_instantaneo.png) | ![Instantaneous kT over time with Langevin](figs/teste1_kT_tempo.png) |
 
 **Réplica de referência** (reference replica, bottom left). A larger view of the lowest-kT state. The title says which walker is there and its energy.
 
@@ -855,13 +863,31 @@ The initial prediction was good mixing with a top that is too cold. The result w
 - Without a thermostat, the mean is also on target, because at every accepted swap the velocities are rescaled to the kT of the state, which acts as a crude thermostat. The widths are what come out wrong: narrow in the cold replicas and wide in the hot ones.
 - Exchange rates vary between thermostats, but within what changes between two seeds. The g(r) curves are also similar.
 
-![Instantaneous kT with Berendsen: measured histograms (solid) much narrower than the canonical ones (dashed)](figs/teste10b_kT_instantaneo.png)
+| Langevin (test 1) | Berendsen (test 10b) |
+| --- | --- |
+| ![Instantaneous kT with Langevin: histograms on top of the canonical curves](figs/teste1_kT_instantaneo.png) | ![Instantaneous kT with Berendsen: measured histograms (solid) much narrower than the canonical ones (dashed)](figs/teste10b_kT_instantaneo.png) |
 
 In the GUI, the numbers should be the same or very close; check them.
 
 **Interpretation**: in this dilute system, Berendsen and NVE barely change the exchange rate, so the problem goes unnoticed in the mixing indicators. Even so, the energy distributions are not the canonical ones, and the exchange criterion, which assumes the canonical ensemble, is no longer exact. In systems with real barriers, such as peptides and proteins, the error shows up in the populations of the states (Rosta, Buchete and Hummer, 2009).
 
 **Conclusion**: in REMD, use a canonical thermostat (Langevin, Bussi or Nosé-Hoover). To check, look at the kinetic energy distribution, not just the mean temperature.
+
+**Part 2: how each thermostat pulls the temperature to the target**
+
+**Settings**: the same preset for each thermostat, but with "kT inicial (× alvo)" (initial kT, × target) set to `2`: velocities start at twice the kT of each state. In the Gráfico menu, choose **kT no tempo** (kT over time) before clicking button 1. The part at negative steps is the equilibration, where you can watch the thermostat work.
+
+**Expected** (times for gamma = 0.1, that is, τ = 10 time units = 200 steps with dt = 0.05; check in the GUI)
+
+| Thermostat | How the instantaneous kT returns to the target |
+| --- | --- |
+| Langevin | Smooth exponential decay, with a time of about 1/(2·gamma) = 100 steps, then fluctuation around the target |
+| Bussi | Exponential decay with time τ (about 200 steps), already with the canonical fluctuation on the way down |
+| Berendsen | Exponential decay with time τ, almost noiseless; then a narrow band around the target |
+| Nosé-Hoover | Overshoots the target and oscillates before settling, with a period of the order of 2πτ/√2 ≈ 900 steps; the chain damps the oscillation |
+| No thermostat (NVE) | Does not return to the target. Part of the kinetic energy turns into potential energy and kT drops a little, but stays above the target until swaps start |
+
+With "kT inicial" = 1 (the default), the same plot shows only the maintenance phase: the fluctuation band of each thermostat around the dashed line, which is what the "kT instantâneo" histogram summarizes. The figure in section 6.3 is this case, with Langevin.
 
 ## 10. Diagnosis: from symptom to parameter
 
@@ -948,6 +974,7 @@ containing:
 | `P_U.png` | P(U) histograms |
 | `g_r.png` | g(r) per state |
 | `kT_instantaneo.png` | Instantaneous kT distribution, with the canonical one dashed |
+| `kT_tempo.png` | Instantaneous kT over time, with the target dashed |
 | `replica_referencia.png` | Reference replica |
 | `replicas.png` | All replica panels |
 | `mapa_ocupacao.png` | Occupancy map |

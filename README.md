@@ -47,6 +47,7 @@ A ferramenta do tutorial é uma interface gráfica interativa em Julia (`remd_gu
 | Mapa: trocas entre walkers | Há grupos de configurações isolados? |
 | Gráfico: g(r) | Que estrutura cada temperatura amostra? |
 | Gráfico: kT instantâneo | O termostato gera as flutuações do ensemble canônico? |
+| Gráfico: kT no tempo | Como o termostato mantém a temperatura no alvo, ou a traz de volta? |
 
 ## Instalação
 

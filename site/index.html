@@ -123,11 +123,11 @@
     </div>
     <figure class="janela">
       <div class="barra" aria-hidden="true"><i></i><i></i><i></i></div>
-      <img src="figs/teste1_janela.png" width="1849" height="1044" loading="lazy"
+      <img src="figs/teste1_janela.png" width="1849" height="1012" loading="lazy"
            alt="Janela da GUI ao fim de uma corrida com 6 réplicas / GUI window at the end of a run with 6 replicas">
       <figcaption>
-        <span lang="pt-BR">Teste 1 do tutorial: 6 réplicas entre kT = 0,55 e 0,86, ao fim de 20 000 passos.</span>
-        <span lang="en">Tutorial test 1: 6 replicas between kT = 0.55 and 0.86, after 20 000 steps.</span>
+        <span lang="pt-BR">Teste 1 do tutorial: 6 réplicas entre kT = 0,55 e 0,86, termostato de Langevin, no meio da corrida (passo 10 360), com o gráfico g(r) selecionado.</span>
+        <span lang="en">Tutorial test 1: 6 replicas between kT = 0.55 and 0.86, Langevin thermostat, halfway through the run (step 10 360), with the g(r) plot selected.</span>
       </figcaption>
     </figure>
     <dl class="paineis">
@@ -138,7 +138,7 @@
       <div><dt lang="pt-BR">Taxa de troca</dt><dt lang="en">Exchange rate</dt><dd lang="pt-BR">Qual par de temperaturas é o gargalo?</dd><dd lang="en">Which pair of temperatures is the bottleneck?</dd></div>
       <div><dt lang="pt-BR">Trocas entre walkers</dt><dt lang="en">Swaps between walkers</dt><dd lang="pt-BR">Há grupos de configurações que nunca se misturam?</dd><dd lang="en">Are there groups of configurations that never mix?</dd></div>
       <div><dt>g(r)</dt><dd lang="pt-BR">Que estrutura cada temperatura amostra? Há aglomerados?</dd><dd lang="en">What structure does each temperature sample? Are there clusters?</dd></div>
-      <div><dt lang="pt-BR">kT instantâneo</dt><dt lang="en">Instantaneous kT</dt><dd lang="pt-BR">O termostato gera as flutuações do ensemble canônico?</dd><dd lang="en">Does the thermostat produce canonical fluctuations?</dd></div>
+      <div><dt lang="pt-BR">kT instantâneo</dt><dt lang="en">Instantaneous kT</dt><dd lang="pt-BR">O termostato mantém a temperatura no alvo, com as flutuações do ensemble canônico?</dd><dd lang="en">Does the thermostat keep the temperature on target, with canonical fluctuations?</dd></div>
       <div><dt>Round trips</dt><dd lang="pt-BR">Quantas vezes cada configuração foi do kT mais frio ao mais quente e voltou?</dd><dd lang="en">How many times did each configuration go from the coldest to the hottest kT and back?</dd></div>
     </dl>
   </div>
@@ -213,7 +213,41 @@
   </div>
 </section>
 
-<section class="bloco" id="roteiro">
+<section class="bloco" id="ferramentas">
+  <div class="container">
+    <div class="cabecalho-bloco">
+      <span class="sobretitulo"><span lang="pt-BR">Novo na versão 0.2</span><span lang="en">New in version 0.2</span></span>
+      <h2><span lang="pt-BR">Estrutura e termostato, ao vivo</span><span lang="en">Structure and thermostat, live</span></h2>
+      <p lang="pt-BR">O menu <b>Gráfico</b> troca o painel do P(U) pela g(r) de cada estado ou pela temperatura instantânea, e o menu <b>Termostato</b> escolhe entre Langevin, Bussi, Berendsen, Nosé-Hoover ou nenhum (NVE).</p>
+      <p lang="en">The <b>Gráfico</b> (plot) menu swaps the P(U) panel for the g(r) of each state or for the instantaneous temperature, and the <b>Termostato</b> menu picks Langevin, Bussi, Berendsen, Nosé-Hoover or none (NVE).</p>
+    </div>
+    <div class="grade c3 galeria">
+      <figure>
+        <img src="figs/teste1_g_r.png" alt="g(r) por estado no teste 1 / g(r) per state in test 1" loading="lazy">
+        <figcaption>
+          <span lang="pt-BR"><b>g(r) por estado</b>O primeiro pico fica no mínimo do Lennard-Jones e cresce quanto mais frio o estado: as partículas formam pares e pequenos grupos.</span>
+          <span lang="en"><b>g(r) per state</b>The first peak sits at the Lennard-Jones minimum and grows as the state gets colder: particles form pairs and small groups.</span>
+        </figcaption>
+      </figure>
+      <figure>
+        <img src="figs/teste1_kT_tempo.png" alt="kT instantâneo ao longo do tempo com Langevin / Instantaneous kT over time with Langevin" loading="lazy">
+        <figcaption>
+          <span lang="pt-BR"><b>kT ao longo do tempo</b>Cada estado flutua em torno do seu alvo tracejado. Com o campo "kT inicial" em 2, dá para ver cada termostato trazer a temperatura de volta.</span>
+          <span lang="en"><b>kT over time</b>Each state fluctuates around its dashed target. With the "kT inicial" field set to 2, you can watch each thermostat bring the temperature back.</span>
+        </figcaption>
+      </figure>
+      <figure>
+        <img src="figs/teste10b_kT_instantaneo.png" alt="kT instantâneo com Berendsen / Instantaneous kT with Berendsen" loading="lazy">
+        <figcaption>
+          <span lang="pt-BR"><b>Teste 10: Berendsen</b>A média está no alvo, mas os histogramas têm só um quarto a dois quintos da largura canônica (tracejada). A taxa de troca não denuncia isso.</span>
+          <span lang="en"><b>Test 10: Berendsen</b>The mean is on target, but the histograms are only a quarter to two fifths of the canonical width (dashed). The exchange rate does not reveal it.</span>
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section class="bloco alt" id="roteiro">
   <div class="container">
     <div class="cabecalho-bloco">
       <span class="sobretitulo"><span lang="pt-BR">Roteiro</span><span lang="en">Roadmap</span></span>
@@ -264,7 +298,7 @@
   </div>
 </section>
 
-<section class="bloco alt" id="instalar">
+<section class="bloco" id="instalar">
   <div class="container">
     <div class="cabecalho-bloco">
       <span class="sobretitulo"><span lang="pt-BR">Instalar e rodar</span><span lang="en">Install and run</span></span>
@@ -297,7 +331,7 @@ julia&gt; remd_gui()</code></pre>
   </div>
 </section>
 
-<section class="bloco" id="modelo">
+<section class="bloco alt" id="modelo">
   <div class="container modelo">
     <div>
       <span class="sobretitulo"><span lang="pt-BR">O modelo</span><span lang="en">The model</span></span>

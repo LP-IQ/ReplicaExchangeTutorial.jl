@@ -269,7 +269,7 @@ Para abrir a trajetória no VMD, veja a seção 12.2.
 
 A janela tem três colunas: controles à esquerda, gráficos no centro e réplicas à direita. Há ainda uma linha de mensagens no rodapé.
 
-![Janela da GUI ao fim de uma corrida com 6 réplicas](figs/teste1_janela.png)
+![Janela da GUI durante o teste 1 (passo 10 360 de 20 000), com o gráfico g(r) selecionado](figs/teste1_janela.png)
 
 ### 6.1 Coluna da esquerda: controles
 
@@ -288,6 +288,7 @@ A janela tem três colunas: controles à esquerda, gráficos no centro e réplic
 | troca a cada (passos) | 50 | Passos de dinâmica entre duas rodadas de tentativas de troca |
 | pausa se trocou (s) | 0,3 | Tempo que a tela congela quando uma troca é aceita (só visualização) |
 | equilibração | 2000 | Passos sem trocas executados pelo botão 1 |
+| kT inicial (× alvo) | 1,0 | As velocidades iniciais são sorteadas nesse múltiplo do kT de cada estado. Use 2 para começar quente e ver o termostato trazer a temperatura de volta (teste 10) |
 | gamma (1/τ do termostato) | 0,1 | No Langevin, o coeficiente de atrito. Nos outros termostatos, o inverso do tempo de acoplamento τ |
 | epsilon (poço LJ) | 1,0 | Profundidade do poço de Lennard-Jones |
 | sigma (diâmetro LJ) | 2,0 | Diâmetro das partículas |
@@ -301,7 +302,7 @@ A janela tem três colunas: controles à esquerda, gráficos no centro e réplic
 | --- | --- |
 | kTs, n, L, epsilon, sigma, semente, termostato | Só depois de clicar em Reset ou no botão 1 (o sistema é recriado) |
 | dt, gamma, nsteps, troca a cada, pausa | No próximo clique em Run |
-| equilibração | No próximo clique no botão 1 |
+| equilibração, kT inicial | No próximo clique no botão 1 |
 
 **Menus e chave**
 
@@ -311,7 +312,7 @@ A janela tem três colunas: controles à esquerda, gráficos no centro e réplic
 | Teste | "1: referência" a "10d: sem termostato" | Preenche os campos com a configuração de um teste da seção 9 |
 | Cores | "Destaque" / "Colorido" | Como os walkers são pintados (seção 6.4) |
 | Mapa | "Ocupação" / "Menor energia" / "Taxa de troca (kT)" / "Trocas entre walkers" | Qual mapa aparece no painel inferior direito do centro (seção 6.3) |
-| Gráfico | "P(U)" / "g(r)" / "kT instantâneo" | O que aparece no painel do meio, à direita (seção 6.3) |
+| Gráfico | "P(U)" / "g(r)" / "kT instantâneo" / "kT no tempo" | O que aparece no painel do meio, à direita (seção 6.3) |
 | menor U no random walk | ligado / desligado | Mostra, no random walk, em que kT estava a configuração de menor energia; com a chave ligada, as linhas dos walkers ficam mais claras para destacar esses pontos |
 
 **Botões**
@@ -358,11 +359,18 @@ Um dos painéis tem **moldura magenta grossa**: é o estado que contém, naquele
 - As curvas dos dois extremos são mais grossas.
 - O título mostra a média de U no menor e no maior kT.
 
-**P(U), g(r) ou kT instantâneo** (meio, direita). O menu "Gráfico" escolhe o que aparece. Nos três casos há uma curva por estado, com as mesmas cores, acumulada apenas durante o Run.
+**P(U), g(r), kT instantâneo ou kT no tempo** (meio, direita). O menu "Gráfico" escolhe o que aparece. Em todos há uma curva por estado, com as mesmas cores. Os três primeiros são acumulados apenas durante o Run; o kT no tempo inclui a equilibração.
 
 - **P(U)**: o histograma da energia potencial. Mostra diretamente a sobreposição que controla a taxa de troca.
 - **g(r)**: a função de distribuição radial, a probabilidade de achar uma partícula a uma distância r de outra, relativa a um gás ideal de mesma densidade. g(r) = 1 é a linha tracejada; a linha pontilhada marca o mínimo do potencial, r = 2^(1/6) σ. Picos altos indicam aglomerados. É o observável estrutural da GUI.
 - **kT instantâneo**: o histograma de 2K/n_f, a temperatura calculada a partir da energia cinética K, com n_f graus de liberdade. As curvas tracejadas são a distribuição esperada no ensemble canônico. Serve para julgar o termostato (seção 8.3).
+- **kT no tempo**: o kT instantâneo de cada estado ao longo da simulação, com o kT alvo tracejado na mesma cor. Mostra o termostato trabalhando: a faixa em que ele mantém a temperatura e, começando quente (campo "kT inicial"), como ele a traz de volta.
+
+Os dois gráficos de temperatura no teste 1 (Langevin, passo 10 360). No histograma, as curvas medidas seguem as canônicas tracejadas; a média ficou em 0,545 no menor kT (alvo 0,550) e 0,864 no maior (alvo 0,860). Na série temporal, cada estado flutua em torno do seu alvo numa faixa de cerca de ±10 %, o valor canônico para 2n = 200 graus de liberdade (√(2/200) = 0,10).
+
+| kT instantâneo | kT no tempo |
+| --- | --- |
+| ![Histograma do kT instantâneo com Langevin](figs/teste1_kT_instantaneo.png) | ![kT instantâneo ao longo do tempo com Langevin](figs/teste1_kT_tempo.png) |
 
 **Réplica de referência** (embaixo, esquerda). Uma visão ampliada do estado de menor kT. O título diz qual walker está lá e sua energia.
 
@@ -853,13 +861,31 @@ A previsão inicial era de circulação boa com um topo frio demais. O resultado
 - Sem termostato, a média também fica no alvo, porque a cada troca aceita as velocidades são reescaladas para o kT do estado, e isso funciona como um termostato grosseiro. As larguras é que saem erradas: estreitas nas réplicas frias e largas nas quentes.
 - As taxas de troca variam entre os termostatos, mas dentro do que muda entre duas sementes. As g(r) também ficam parecidas.
 
-![kT instantâneo com Berendsen: histogramas medidos (cheios) bem mais estreitos que os canônicos (tracejados)](figs/teste10b_kT_instantaneo.png)
+| Langevin (teste 1) | Berendsen (teste 10b) |
+| --- | --- |
+| ![kT instantâneo com Langevin: histogramas sobre as curvas canônicas](figs/teste1_kT_instantaneo.png) | ![kT instantâneo com Berendsen: histogramas medidos (cheios) bem mais estreitos que os canônicos (tracejados)](figs/teste10b_kT_instantaneo.png) |
 
 Na GUI, os números devem ser os mesmos ou muito próximos; confira.
 
 **Interpretação**: neste sistema diluído, Berendsen e NVE quase não mudam a taxa de troca, e por isso o problema passa despercebido nos indicadores de circulação. Mesmo assim, as distribuições de energia não são as canônicas, e o critério de troca, que supõe o ensemble canônico, deixa de ser exato. Em sistemas com barreiras de verdade, como peptídeos e proteínas, o erro aparece nas populações dos estados (Rosta, Buchete e Hummer, 2009).
 
 **Conclusão**: no REMD, use um termostato canônico (Langevin, Bussi ou Nosé-Hoover). Para conferir, olhe a distribuição da energia cinética, não só a temperatura média.
+
+**Parte 2: como cada termostato puxa a temperatura para o alvo**
+
+**Configuração**: o mesmo preset de cada termostato, mas com "kT inicial (× alvo)" igual a `2`: as velocidades começam com o dobro do kT de cada estado. No menu Gráfico, escolha **kT no tempo** antes de clicar no botão 1. A parte em passos negativos é a equilibração, onde se vê o termostato trabalhar.
+
+**Esperado** (tempos para gamma = 0,1, ou τ = 10 unidades de tempo = 200 passos com dt = 0,05; confira na GUI)
+
+| Termostato | Como o kT instantâneo volta ao alvo |
+| --- | --- |
+| Langevin | Queda exponencial suave, com tempo de cerca de 1/(2·gamma) = 100 passos, e depois flutuação em torno do alvo |
+| Bussi | Queda exponencial com tempo τ (cerca de 200 passos), já com a flutuação canônica durante a descida |
+| Berendsen | Queda exponencial com tempo τ, quase sem ruído; depois, uma faixa estreita em torno do alvo |
+| Nosé-Hoover | Passa do alvo e oscila antes de assentar, com período da ordem de 2πτ/√2 ≈ 900 passos; a cadeia amortece a oscilação |
+| Sem termostato (NVE) | Não volta ao alvo. Parte da energia cinética vira energia potencial e o kT cai um pouco, mas fica acima do alvo até as trocas começarem |
+
+Com "kT inicial" = 1 (o padrão), o mesmo gráfico mostra só a fase de manutenção: a faixa de flutuação de cada termostato em torno do tracejado, que é o que o histograma "kT instantâneo" resume. A figura da seção 6.3 é esse caso, com Langevin.
 
 ## 10. Diagnóstico: do sintoma ao parâmetro
 
@@ -946,6 +972,7 @@ contendo:
 | `P_U.png` | Histogramas P(U) |
 | `g_r.png` | g(r) por estado |
 | `kT_instantaneo.png` | Distribuição do kT instantâneo, com a canônica tracejada |
+| `kT_tempo.png` | kT instantâneo ao longo do tempo, com o alvo tracejado |
 | `replica_referencia.png` | Réplica de referência |
 | `replicas.png` | Todos os painéis de réplicas |
 | `mapa_ocupacao.png` | Mapa de ocupação |

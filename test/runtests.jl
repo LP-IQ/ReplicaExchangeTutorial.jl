@@ -134,3 +134,16 @@ end
     @test sum(kT_inst_teorico(T, 0.7, 78) for T in dT:dT:3.0) * dT ≈ 1 rtol=1e-3
     @test_throws ErrorException new_sim([0.7], 10, 20.0, 1.0, 2.0, 0.01, 1.0; termostato=:andersen)
 end
+
+@testset "kT inicial" begin
+    # velocidades sorteadas em fator × kT de cada estado (n = 400: kT instantâneo com ~5 % de ruído)
+    for t in (:langevin, :berendsen)
+        s = new_sim([0.5, 1.0], 400, 200.0, 1.0, 2.0, 0.05, 0.1; seed=11, termostato=t)
+        prepare!(s; fator_kT=2.0)
+        for i in 1:2
+            @test ReplicaExchangeTutorial.kT_inst(s.reps[i], t) ≈ 2 * s.kTs[i] rtol=0.2
+        end
+        prepare!(s)                                   # padrão: no alvo
+        @test ReplicaExchangeTutorial.kT_inst(s.reps[1], t) ≈ s.kTs[1] rtol=0.2
+    end
+end

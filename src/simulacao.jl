@@ -152,12 +152,14 @@ function new_sim(kTs, n, L, eps, sig, dt, gam; seed=rand(1:10^6), termostato=:la
                termostato, vxi=zeros(NCADEIA, R))
 end
 
-# Minimiza uma configuração e copia para todas as réplicas
-function prepare!(s::Sim)
+# Minimiza uma configuração e copia para todas as réplicas.
+# fator_kT: as velocidades iniciais são sorteadas em fator_kT × kT do estado
+# (1 = já no alvo; 2 = começa quente, para ver o termostato trazer a temperatura de volta)
+function prepare!(s::Sim; fator_kT=1.0)
     R = length(s.reps); r1 = s.reps[1]
     minimize!(r1, s.L, s.eps, s.sig)
     for i in 1:R
-        r = s.reps[i]; kT = s.kTs[i]
+        r = s.reps[i]; kT = fator_kT * s.kTs[i]
         r.x .= r1.x; r.y .= r1.y
         # velocidades de Maxwell-Boltzmann (m = 1)
         r.vx .= sqrt(kT) .* randn(s.rngs[i], length(r.x))
