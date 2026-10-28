@@ -186,7 +186,7 @@ Cada réplica segue a **dinâmica de Langevin**, integrada com o esquema BAOAB:
 m\,\ddot{x} = F(x) - \gamma\, m\, \dot{x} + \sqrt{2\,\gamma\, m\, kT}\;\eta(t)
 ```
 
-O termo de atrito (γ) e o ruído aleatório (η) juntos funcionam como termostato: mantêm a réplica no ensemble canônico da sua temperatura. O atrito é o campo "gamma (atrito)" da GUI.
+O termo de atrito (γ) e o ruído aleatório (η) juntos funcionam como termostato: mantêm a réplica no ensemble canônico da sua temperatura. O atrito é o campo "gamma (1/τ do termostato)" da GUI. O Langevin é o termostato padrão; a GUI oferece também Bussi, Berendsen, Nosé-Hoover e nenhum termostato (NVE), discutidos na seção 8.3.
 
 As réplicas são independentes entre uma tentativa de troca e a seguinte, e a GUI as propaga em paralelo, uma por thread.
 
@@ -288,7 +288,7 @@ A janela tem três colunas: controles à esquerda, gráficos no centro e réplic
 | troca a cada (passos) | 50 | Passos de dinâmica entre duas rodadas de tentativas de troca |
 | pausa se trocou (s) | 0,3 | Tempo que a tela congela quando uma troca é aceita (só visualização) |
 | equilibração | 2000 | Passos sem trocas executados pelo botão 1 |
-| gamma (atrito) | 0,1 | Coeficiente de atrito do termostato de Langevin |
+| gamma (1/τ do termostato) | 0,1 | No Langevin, o coeficiente de atrito. Nos outros termostatos, o inverso do tempo de acoplamento τ |
 | epsilon (poço LJ) | 1,0 | Profundidade do poço de Lennard-Jones |
 | sigma (diâmetro LJ) | 2,0 | Diâmetro das partículas |
 | semente (0 = aleatória) | 0 | Semente dos números aleatórios |
@@ -299,7 +299,7 @@ A janela tem três colunas: controles à esquerda, gráficos no centro e réplic
 
 | Campo alterado | Passa a valer |
 | --- | --- |
-| kTs, n, L, epsilon, sigma, semente | Só depois de clicar em Reset ou no botão 1 (o sistema é recriado) |
+| kTs, n, L, epsilon, sigma, semente, termostato | Só depois de clicar em Reset ou no botão 1 (o sistema é recriado) |
 | dt, gamma, nsteps, troca a cada, pausa | No próximo clique em Run |
 | equilibração | No próximo clique no botão 1 |
 
@@ -307,9 +307,11 @@ A janela tem três colunas: controles à esquerda, gráficos no centro e réplic
 
 | Controle | Opções | Função |
 | --- | --- | --- |
-| Teste | "1: referência" a "9: faixa fria" | Preenche os campos com a configuração de um teste da seção 9 |
+| termostato | "Langevin" / "Bussi (v-rescale)" / "Berendsen" / "Nosé-Hoover" / "Nenhum (NVE)" | Como cada réplica é mantida na sua temperatura (seção 8.3) |
+| Teste | "1: referência" a "10d: sem termostato" | Preenche os campos com a configuração de um teste da seção 9 |
 | Cores | "Destaque" / "Colorido" | Como os walkers são pintados (seção 6.4) |
 | Mapa | "Ocupação" / "Menor energia" / "Taxa de troca (kT)" / "Trocas entre walkers" | Qual mapa aparece no painel inferior direito do centro (seção 6.3) |
+| Gráfico | "P(U)" / "g(r)" / "kT instantâneo" | O que aparece no painel do meio, à direita (seção 6.3) |
 | menor U no random walk | ligado / desligado | Mostra, no random walk, em que kT estava a configuração de menor energia; com a chave ligada, as linhas dos walkers ficam mais claras para destacar esses pontos |
 
 **Botões**
@@ -356,7 +358,11 @@ Um dos painéis tem **moldura magenta grossa**: é o estado que contém, naquele
 - As curvas dos dois extremos são mais grossas.
 - O título mostra a média de U no menor e no maior kT.
 
-**P(U) por réplica** (meio, direita). Um histograma de energia potencial por estado, com as mesmas cores. É acumulado apenas durante o Run. Mostra diretamente a sobreposição que controla a taxa de troca.
+**P(U), g(r) ou kT instantâneo** (meio, direita). O menu "Gráfico" escolhe o que aparece. Nos três casos há uma curva por estado, com as mesmas cores, acumulada apenas durante o Run.
+
+- **P(U)**: o histograma da energia potencial. Mostra diretamente a sobreposição que controla a taxa de troca.
+- **g(r)**: a função de distribuição radial, a probabilidade de achar uma partícula a uma distância r de outra, relativa a um gás ideal de mesma densidade. g(r) = 1 é a linha tracejada; a linha pontilhada marca o mínimo do potencial, r = 2^(1/6) σ. Picos altos indicam aglomerados. É o observável estrutural da GUI.
+- **kT instantâneo**: o histograma de 2K/n_f, a temperatura calculada a partir da energia cinética K, com n_f graus de liberdade. As curvas tracejadas são a distribuição esperada no ensemble canônico. Serve para julgar o termostato (seção 8.3).
 
 **Réplica de referência** (embaixo, esquerda). Uma visão ampliada do estado de menor kT. O título diz qual walker está lá e sua energia.
 
@@ -531,9 +537,9 @@ No REMD há um cuidado adicional: **o limite de dt é imposto pela réplica mais
 
 Observado: dt = 0,05 foi estável até kT = 0,86. Acima disso, confira.
 
-#### gamma (atrito)
+#### gamma (1/τ do termostato)
 
-O coeficiente de atrito do termostato de Langevin. O tempo de relaxação da temperatura é da ordem de 1/gamma.
+No Langevin, o coeficiente de atrito. O tempo de relaxação da temperatura é da ordem de 1/gamma. Nos outros termostatos, gamma define o tempo de acoplamento τ = 1/gamma.
 
 | gamma | Comportamento |
 | --- | --- |
@@ -542,6 +548,28 @@ O coeficiente de atrito do termostato de Langevin. O tempo de relaxação da tem
 | Grande (1 ou mais) | A temperatura se ajusta rápido, mas o movimento fica difusivo e o sistema explora o espaço mais devagar |
 
 No REMD, gamma controla quanto cada réplica se descorrelaciona entre duas tentativas de troca. Não é preciso reequilibrar depois de uma troca aceita: como o critério satisfaz o balanço detalhado e as velocidades são reescaladas, a configuração recebida já é uma amostra válida do novo kT. Com gamma grande demais, o movimento fica difusivo, a configuração muda pouco entre tentativas e o mesmo par tende a trocar e destrocar.
+
+#### O termostato
+
+O critério de troca da seção 3 supõe que **cada réplica amostra o ensemble canônico** da sua temperatura. A escolha do termostato decide se isso é verdade.
+
+| Termostato | Como funciona | Gera o ensemble canônico? |
+| --- | --- | --- |
+| Langevin (padrão) | Atrito e ruído aleatório em cada partícula (integrador BAOAB) | Sim |
+| Bussi (v-rescale) | Reescala todas as velocidades por um fator sorteado, de modo que a energia cinética tenha a distribuição canônica (Bussi, Donadio e Parrinello, 2007). É o `v-rescale` do GROMACS | Sim |
+| Berendsen | Reescala as velocidades para aproximar a energia cinética do alvo: v → λv, com λ² = 1 + (dt/τ)(kT/kT_inst − 1) (Berendsen et al., 1984) | **Não**: as flutuações da energia cinética ficam menores que as canônicas, e as da energia potencial também são afetadas |
+| Nosé-Hoover | Uma variável extra (aqui, uma cadeia de três) age como atrito que muda de sinal conforme a temperatura (Martyna, Klein e Tuckerman, 1992) | Sim, se a dinâmica for ergódica. A cadeia existe porque um termostato só pode não ser ergódico em sistemas pequenos |
+| Nenhum (NVE) | Só a dinâmica de Newton (velocity Verlet) | Não: a energia total fica constante, e a temperatura deriva |
+
+Com Berendsen, as distribuições de energia não são as canônicas, e o critério de troca, que supõe essas distribuições, deixa de ser exato. Rosta, Buchete e Hummer (2009) descrevem os artefatos que isso causa no REMD e recomendam usar apenas termostatos que geram o ensemble canônico.
+
+Detalhes da implementação:
+
+- Langevin usa o integrador BAOAB; os demais usam velocity Verlet mais o passo do termostato.
+- Nos termostatos que não são Langevin, o momento total começa em zero e se conserva; por isso n_f = 2n − 2 em vez de 2n.
+- No Nosé-Hoover, as variáveis da cadeia ficam com o estado (a temperatura), não com a configuração. Numa troca, só as velocidades das partículas são reescaladas.
+
+Para comparar termostatos, use o gráfico "kT instantâneo" (seção 6.3) e o teste 10.
 
 ### 8.4 Frequência de troca
 
@@ -618,8 +646,13 @@ Uma tabela para anotar os resultados:
 - P(U): quanto os histogramas vizinhos se sobrepõem?
 - Mapa "Ocupação": as células estão perto de 1/6 ≈ 0,17?
 - Mapa "Taxa de troca (kT)": qual par tem a menor taxa?
+- Gráfico "g(r)": em que kT aparecem picos acima de g = 1 perto do mínimo do potencial (r ≈ 2,24)?
 
 **Observado** (uma corrida de 20 000 passos): taxa de troca de 0,63 a 0,80, com o menor valor no par mais frio; 45 round trips; ocupação entre 0,11 e 0,26, em torno do ideal de 0,17.
+
+**g(r)** (mesmo código e semente 42, rodado fora da janela): um pico em r ≈ 2,2, no mínimo do potencial, com g ≈ 6,7 no menor kT e ≈ 3,4 no maior. Só no menor kT aparecem picos secundários fracos (g ≈ 1,3 a 1,4) entre r ≈ 3,8 e 5, e acima de r ≈ 7 todas as curvas ficam em g ≈ 1. Num sistema diluído, a altura do primeiro pico é quase o fator de Boltzmann do poço: g(r_min) ≈ exp(ε/kT), que dá 6,2 em kT = 0,55 e 3,2 em kT = 0,86. Ou seja, nessa faixa as partículas formam principalmente pares e pequenos grupos, não aglomerados grandes.
+
+![g(r) no teste 1](figs/teste1_g_r.png)
 
 ![P(U) com 6 réplicas](figs/teste1_P_U.png)
 
@@ -774,6 +807,8 @@ A previsão inicial era de circulação boa com um topo frio demais. O resultado
 - Nenhum round trip. Ocupação e trocas entre walkers em dois blocos: os walkers 1 e 2 ficam nas duas temperaturas mais frias, e os walkers 3 a 6 nas quatro mais quentes.
 - As P(U) frias são largas e com vários picos, porque a energia está derivando.
 
+**g(r)** (mesmo código e semente 42, rodado fora da janela): em kT = 0,35, o primeiro pico chega a g ≈ 40, seguido de picos em r ≈ 4,4 (g ≈ 11) e 6,2 (g ≈ 6), distâncias de um empacotamento compacto; até r = 10 a curva não volta a 1, porque os aglomerados são maiores que a janela da g(r). Em kT = 0,45, o primeiro pico é g ≈ 11 e o resto da curva fica perto de 1. A g(r) mostra a condensação diretamente: compare com a do teste 1, em que o maior pico era 6,7.
+
 ![Janela ao fim do teste 9](figs/teste9_janela.png)
 
 | Painéis das réplicas | Energia |
@@ -794,9 +829,41 @@ A previsão inicial era de circulação boa com um topo frio demais. O resultado
 
 **A previsão original** (circulação boa com topo frio demais) exigiria uma faixa toda abaixo da transição, em que todas as réplicas têm aglomerados. Nessa região o equilíbrio é lento, e o resultado depende muito da duração da corrida. A ideia continua valendo em geral: taxa de troca e round trips dizem se as configurações circulam, mas não se a temperatura máxima cruza a barreira que importa.
 
+### Teste 10: o termostato
+
+**Objetivo**: ver que nem todo termostato gera o ensemble canônico e que a taxa de troca não denuncia isso.
+
+**Configuração**: a escada do teste 1, mudando só o termostato. No menu Teste: "10a: Bussi", "10b: Berendsen", "10c: Nosé-Hoover" e "10d: sem termostato". Compare com o teste 1 (Langevin). O termostato só passa a valer no botão 1, que recria o sistema.
+
+**O que olhar**
+- Gráfico "kT instantâneo": as curvas cheias (medidas) seguem as tracejadas (canônicas)? O título dá a média no menor e no maior kT.
+- Taxa de troca por par e P(U), comparados com o teste 1.
+
+**Observado** (mesmo código da GUI, rodado fora da janela: semente 42, equilibração 2000, 20 000 passos)
+
+| Termostato | Taxa de troca por par | kT médio (menor / maior; alvo 0,550 / 0,860) | Largura do kT instantâneo ÷ largura canônica |
+| --- | --- | --- | --- |
+| Langevin | 0,59 / 0,64 / 0,70 / 0,79 / 0,81 | 0,551 / 0,860 | 1,00 a 1,06 |
+| Bussi | 0,64 / 0,65 / 0,77 / 0,82 / 0,80 | 0,549 / 0,873 | 0,95 a 0,99 |
+| Nosé-Hoover | 0,71 / 0,68 / 0,71 / 0,78 / 0,83 | 0,549 / 0,866 | 0,90 a 0,98 |
+| **Berendsen** | 0,56 / 0,65 / 0,77 / 0,77 / 0,80 | 0,555 / 0,854 | **0,25 a 0,41** |
+| Sem termostato (NVE) | 0,71 / 0,74 / 0,80 / 0,79 / 0,84 | 0,555 / 0,861 | 0,76 a 1,14 |
+
+- Com Berendsen, o histograma do kT instantâneo tem entre um quarto e dois quintos da largura canônica, e fica mais estreito quanto mais quente a réplica. A média, porém, está no alvo.
+- Sem termostato, a média também fica no alvo, porque a cada troca aceita as velocidades são reescaladas para o kT do estado, e isso funciona como um termostato grosseiro. As larguras é que saem erradas: estreitas nas réplicas frias e largas nas quentes.
+- As taxas de troca variam entre os termostatos, mas dentro do que muda entre duas sementes. As g(r) também ficam parecidas.
+
+![kT instantâneo com Berendsen: histogramas medidos (cheios) bem mais estreitos que os canônicos (tracejados)](figs/teste10b_kT_instantaneo.png)
+
+Na GUI, os números devem ser os mesmos ou muito próximos; confira.
+
+**Interpretação**: neste sistema diluído, Berendsen e NVE quase não mudam a taxa de troca, e por isso o problema passa despercebido nos indicadores de circulação. Mesmo assim, as distribuições de energia não são as canônicas, e o critério de troca, que supõe o ensemble canônico, deixa de ser exato. Em sistemas com barreiras de verdade, como peptídeos e proteínas, o erro aparece nas populações dos estados (Rosta, Buchete e Hummer, 2009).
+
+**Conclusão**: no REMD, use um termostato canônico (Langevin, Bussi ou Nosé-Hoover). Para conferir, olhe a distribuição da energia cinética, não só a temperatura média.
+
 ## 10. Diagnóstico: do sintoma ao parâmetro
 
-As tabelas abaixo relacionam cada sintoma ao parâmetro que deve ser alterado. A ordem sugerida é: preparação, circulação pela escada e temperatura máxima.
+As tabelas abaixo relacionam cada sintoma ao parâmetro que deve ser alterado. A ordem sugerida é: preparação, circulação pela escada, temperatura máxima e, por fim, o termostato.
 
 **Etapa 1: a preparação está correta?**
 
@@ -825,6 +892,13 @@ As tabelas abaixo relacionam cada sintoma ao parâmetro que deve ser alterado. A
 | Circulação boa, mas a réplica de referência não muda | Painel do maior kT com aglomerados persistentes | kT máx baixo demais | Aumentar kT máx (e réplicas, para manter a taxa) |
 | Energia de um painel quente dispara | Título do painel; gráfico de energia | dt grande demais para a réplica quente | Reduzir dt |
 
+**Etapa 4: o ensemble de cada réplica é o canônico?**
+
+| Sintoma | Onde aparece | Causa provável | O que variar |
+| --- | --- | --- | --- |
+| Histograma do kT instantâneo mais estreito que a curva tracejada | Gráfico "kT instantâneo" (teste 10) | Termostato que não gera o ensemble canônico (Berendsen) | Trocar para Langevin, Bussi ou Nosé-Hoover |
+| kT instantâneo médio longe do alvo | Título do gráfico "kT instantâneo" | Sem termostato (NVE), ou τ = 1/gamma longo demais para a duração da corrida | Usar um termostato; aumentar gamma |
+
 ## 11. Da GUI para uma simulação molecular
 
 Os parâmetros da GUI têm equivalentes diretos em pacotes de dinâmica molecular. A tabela usa o GROMACS como exemplo.
@@ -834,7 +908,8 @@ Os parâmetros da GUI têm equivalentes diretos em pacotes de dinâmica molecula
 | kTs | Temperatura de cada réplica | `ref-t` diferente no `.mdp` de cada diretório |
 | troca a cada (passos) | Intervalo entre tentativas | `mdrun -replex N` |
 | Execução em paralelo das réplicas | Uma simulação por réplica, sincronizadas | `mpirun -np R gmx_mpi mdrun -multidir …` |
-| gamma (atrito) | Acoplamento do termostato | `tau-t` (com o integrador `sd`, o atrito é 1/`tau-t`) |
+| gamma (1/τ do termostato) | Acoplamento do termostato | `tau-t` (com o integrador `sd`, o atrito é 1/`tau-t`) |
+| termostato | Algoritmo do termostato | `integrator = sd` (Langevin) ou `tcoupl = v-rescale` (Bussi), `nose-hoover` ou `berendsen` |
 | equilibração | Equilibrar cada réplica na sua temperatura antes das trocas | NVT/NPT por réplica |
 | n partículas | Número total de átomos, **incluindo o solvente** | — |
 | Random walk dos walkers | Índices de réplica ao longo do tempo | Linhas "Repl ex" do log; script `demux.pl` (no diretório `scripts/` do código-fonte) com `gmx trjcat -demux` |
@@ -869,6 +944,8 @@ contendo:
 | `random_walk.png` | Random walk das configurações |
 | `energia.png` | Energia potencial por réplica |
 | `P_U.png` | Histogramas P(U) |
+| `g_r.png` | g(r) por estado |
+| `kT_instantaneo.png` | Distribuição do kT instantâneo, com a canônica tracejada |
 | `replica_referencia.png` | Réplica de referência |
 | `replicas.png` | Todos os painéis de réplicas |
 | `mapa_ocupacao.png` | Mapa de ocupação |
@@ -877,7 +954,7 @@ contendo:
 | `mapa_trocas_walkers.png` | Mapa de trocas entre walkers |
 | `janela_completa.png` | A janela inteira |
 
-Os quatro mapas são salvos independentemente de qual está selecionado. A resolução é a da janela; maximize-a antes de salvar para obter figuras maiores.
+Os quatro mapas e os três gráficos do painel P(U) são salvos independentemente de qual está selecionado. A resolução é a da janela; maximize-a antes de salvar para obter figuras maiores.
 
 ### 12.2 Trajetória
 
@@ -919,7 +996,7 @@ Reset ou uma nova equilibração apagam os frames acumulados. O limite é de 50 
 ## 14. Limitações do modelo
 
 - **É um modelo didático.** Um gás de Lennard-Jones diluído em 2D não tem barreiras tão altas quanto as de uma biomolécula, e o ganho de amostragem com o REMD é menor do que em sistemas reais.
-- **A GUI mostra a mecânica do método, não o ganho final.** Os painéis diagnosticam a circulação pela escada. Não há, na versão atual, um observável estrutural comparando a réplica de referência com e sem trocas.
+- **A GUI mostra a mecânica do método, mais do que o ganho final.** Os painéis diagnosticam a circulação pela escada. O único observável estrutural é a g(r); para ver o ganho do REMD, compare a g(r) do menor kT com e sem trocas (por exemplo, com "troca a cada" maior que nsteps).
 - **Custo O(n²).** Sem raio de corte nem lista de vizinhos, sistemas com mais de algumas centenas de partículas ficam lentos.
 - **Estatística curta.** Corridas de 20 000 passos dão algumas centenas de tentativas por par. As taxas de troca têm incerteza de alguns centésimos, e os mapas por walker têm mais ruído ainda. Diferenças pequenas entre corridas podem ser apenas flutuação; repita com outra semente antes de concluir.
 - **Só T-REMD.** Variantes como REST2 e REMD em Hamiltoniano não estão implementadas.
@@ -943,6 +1020,9 @@ Reset ou uma nova equilibração apagam os frames acumulados. O limite é de 50 
 | Gargalo | Par de estados com taxa de troca muito baixa, que divide a escada |
 | Balanço detalhado (*detailed balance*) | No equilíbrio, cada transição ocorre com a mesma frequência que a inversa; é o que garante que o critério de troca preserva o ensemble de cada estado |
 | Quasi-ergodicidade | Situação em que a simulação fica presa numa região e não amostra o ensemble completo |
+| g(r) | Função de distribuição radial: densidade de partículas a uma distância r de uma partícula, dividida pela densidade média |
+| kT instantâneo | 2K/n_f, a temperatura calculada com a energia cinética de um instante; flutua em torno do kT do estado |
+| Termostato canônico | Algoritmo que mantém a temperatura e gera o ensemble canônico (Langevin, Bussi, Nosé-Hoover); o Berendsen não é um deles |
 | Demultiplexar | Reconstruir a trajetória contínua de cada walker a partir das trajetórias por estado |
 | REST2 | Variante em que só as interações do soluto são escaladas, reduzindo o número de réplicas |
 
@@ -964,6 +1044,13 @@ Reset ou uma nova equilibração apagam os frames acumulados. O limite é de 50 
 
 **Variantes**
 - Wang, L.; Friesner, R. A.; Berne, B. J. Replica exchange with solute scaling: a more efficient version of replica exchange with solute tempering (REST2). *J. Phys. Chem. B* **115**, 9431 (2011). doi:10.1021/jp204407d
+
+**Termostatos**
+- Berendsen, H. J. C.; Postma, J. P. M.; van Gunsteren, W. F.; DiNola, A.; Haak, J. R. Molecular dynamics with coupling to an external bath. *J. Chem. Phys.* **81**, 3684 (1984). doi:10.1063/1.448118
+- Bussi, G.; Donadio, D.; Parrinello, M. Canonical sampling through velocity rescaling. *J. Chem. Phys.* **126**, 014101 (2007). doi:10.1063/1.2408420
+- Martyna, G. J.; Klein, M. L.; Tuckerman, M. Nosé–Hoover chains: the canonical ensemble via continuous dynamics. *J. Chem. Phys.* **97**, 2635 (1992). doi:10.1063/1.463940
+- Martyna, G. J.; Tuckerman, M. E.; Tobias, D. J.; Klein, M. L. Explicit reversible integrators for extended systems dynamics. *Mol. Phys.* **87**, 1117 (1996). doi:10.1080/00268979600100761
+- Rosta, E.; Buchete, N.-V.; Hummer, G. Thermostat artifacts in replica exchange molecular dynamics simulations. *J. Chem. Theory Comput.* **5**, 1393 (2009). doi:10.1021/ct800557h
 
 **Integrador**
 - Leimkuhler, B.; Matthews, C. Rational construction of stochastic numerical methods for molecular sampling. *Appl. Math. Res. eXpress* **2013**, 34–56 (2013). doi:10.1093/amrx/abs010

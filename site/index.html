@@ -68,8 +68,8 @@
         <span lang="pt-BR">Replica Exchange MD, <span class="grad">um parâmetro de cada vez</span></span>
         <span lang="en">Replica exchange MD, <span class="grad">one parameter at a time</span></span>
       </h1>
-      <p class="lead" lang="pt-BR">Uma interface gráfica que roda T-REMD num fluido de Lennard-Jones 2D e mostra, enquanto a simulação anda, como a escada de temperaturas, a frequência de troca e o tamanho do sistema mudam a amostragem. Vem com um tutorial de nove testes guiados.</p>
-      <p class="lead" lang="en">A graphical interface that runs T-REMD on a 2D Lennard-Jones fluid and shows, while the simulation runs, how the temperature ladder, the exchange frequency and the system size change the sampling. It comes with a tutorial of nine guided tests.</p>
+      <p class="lead" lang="pt-BR">Uma interface gráfica que roda T-REMD num fluido de Lennard-Jones 2D e mostra, enquanto a simulação anda, como a escada de temperaturas, a frequência de troca, o tamanho do sistema e o termostato mudam a amostragem. Vem com um tutorial de dez testes guiados.</p>
+      <p class="lead" lang="en">A graphical interface that runs T-REMD on a 2D Lennard-Jones fluid and shows, while the simulation runs, how the temperature ladder, the exchange frequency, the system size and the thermostat change the sampling. It comes with a tutorial of ten guided tests.</p>
       <div class="botoes">
         <a class="botao primario" href="tutorial.html" lang="pt-BR">Começar o tutorial
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
@@ -137,6 +137,9 @@
       <div><dt lang="pt-BR">Mapa de ocupação</dt><dt lang="en">Occupancy map</dt><dd lang="pt-BR">Quanto tempo cada walker passou em cada kT?</dd><dd lang="en">How long did each walker spend at each kT?</dd></div>
       <div><dt lang="pt-BR">Taxa de troca</dt><dt lang="en">Exchange rate</dt><dd lang="pt-BR">Qual par de temperaturas é o gargalo?</dd><dd lang="en">Which pair of temperatures is the bottleneck?</dd></div>
       <div><dt lang="pt-BR">Trocas entre walkers</dt><dt lang="en">Swaps between walkers</dt><dd lang="pt-BR">Há grupos de configurações que nunca se misturam?</dd><dd lang="en">Are there groups of configurations that never mix?</dd></div>
+      <div><dt>g(r)</dt><dd lang="pt-BR">Que estrutura cada temperatura amostra? Há aglomerados?</dd><dd lang="en">What structure does each temperature sample? Are there clusters?</dd></div>
+      <div><dt lang="pt-BR">kT instantâneo</dt><dt lang="en">Instantaneous kT</dt><dd lang="pt-BR">O termostato gera as flutuações do ensemble canônico?</dd><dd lang="en">Does the thermostat produce canonical fluctuations?</dd></div>
+      <div><dt>Round trips</dt><dd lang="pt-BR">Quantas vezes cada configuração foi do kT mais frio ao mais quente e voltou?</dd><dd lang="en">How many times did each configuration go from the coldest to the hottest kT and back?</dd></div>
     </dl>
   </div>
 </section>
@@ -169,8 +172,8 @@
       <article class="cartao" style="--c: var(--hot)">
         <span class="num">04</span>
         <h3><span lang="pt-BR">O que fazer quando falha</span><span lang="en">What to do when it fails</span></h3>
-        <p lang="pt-BR">Gargalos, transições de fase e falta de equilíbrio, com uma tabela que liga cada sintoma ao parâmetro a mudar.</p>
-        <p lang="en">Bottlenecks, phase transitions and lack of equilibrium, with a table that links each symptom to the parameter to change.</p>
+        <p lang="pt-BR">Gargalos, transições de fase, falta de equilíbrio e termostatos que não geram o ensemble canônico, com uma tabela que liga cada sintoma ao parâmetro a mudar.</p>
+        <p lang="en">Bottlenecks, phase transitions, lack of equilibrium and thermostats that do not produce the canonical ensemble, with a table that links each symptom to the parameter to change.</p>
       </article>
     </div>
   </div>
@@ -180,7 +183,7 @@
   <div class="container">
     <div class="cabecalho-bloco">
       <span class="sobretitulo"><span lang="pt-BR">Resultados reais da GUI</span><span lang="en">Real results from the GUI</span></span>
-      <h2><span lang="pt-BR">Nove testes, um parâmetro por vez</span><span lang="en">Nine tests, one parameter at a time</span></h2>
+      <h2><span lang="pt-BR">Dez testes, um parâmetro por vez</span><span lang="en">Ten tests, one parameter at a time</span></h2>
       <p lang="pt-BR">Cada teste já vem pronto no menu da interface. Abaixo, três deles, com as figuras salvas pela própria GUI.</p>
       <p lang="en">Every test is ready to load from the interface menu. Below are three of them, with figures saved by the GUI itself.</p>
     </div>
@@ -237,16 +240,16 @@
         <span class="secoes"><span lang="pt-BR">seção 8</span><span lang="en">section 8</span></span>
         <div>
           <h3><a href="tutorial.html#8-os-parâmetros-de-controle" lang="pt-BR">Os parâmetros de controle</a><a href="tutorial-en.html#8-the-control-parameters" lang="en">The control parameters</a></h3>
-          <p lang="pt-BR">Escada, tamanho do sistema, dt, atrito, frequência de troca, equilibração e duração da corrida.</p>
-          <p lang="en">Ladder, system size, dt, friction, exchange frequency, equilibration and run length.</p>
+          <p lang="pt-BR">Escada, tamanho do sistema, dt, termostato, frequência de troca, equilibração e duração da corrida.</p>
+          <p lang="en">Ladder, system size, dt, thermostat, exchange frequency, equilibration and run length.</p>
         </div>
       </li>
       <li style="--c: var(--warm)">
         <span class="secoes"><span lang="pt-BR">seções 9–10</span><span lang="en">sections 9–10</span></span>
         <div>
           <h3><a href="tutorial.html#9-testes" lang="pt-BR">Testes e diagnóstico</a><a href="tutorial-en.html#9-tests" lang="en">Tests and diagnosis</a></h3>
-          <p lang="pt-BR">Nove testes guiados e uma tabela que vai do sintoma visto na tela ao parâmetro que deve mudar.</p>
-          <p lang="en">Nine guided tests and a table that goes from the symptom on screen to the parameter that should change.</p>
+          <p lang="pt-BR">Dez testes guiados e uma tabela que vai do sintoma visto na tela ao parâmetro que deve mudar.</p>
+          <p lang="en">Ten guided tests and a table that goes from the symptom on screen to the parameter that should change.</p>
         </div>
       </li>
       <li style="--c: var(--hot)">
@@ -301,14 +304,14 @@ julia&gt; remd_gui()</code></pre>
       <h2><span lang="pt-BR">Simples de propósito</span><span lang="en">Simple on purpose</span></h2>
       <ul lang="pt-BR">
         <li>Partículas de Lennard-Jones em 2D, caixa periódica, sem raio de corte.</li>
-        <li>Dinâmica de Langevin com o integrador BAOAB, uma réplica por thread.</li>
+        <li>Dinâmica de Langevin (integrador BAOAB) ou velocity Verlet com os termostatos de Bussi, Berendsen ou Nosé-Hoover, ou sem termostato; uma réplica por thread.</li>
         <li>Trocas entre kT vizinhos, alternando os pares 1-2, 3-4… e 2-3, 4-5…, como no GROMACS.</li>
         <li>Velocidades reescaladas por √(kT novo / kT antigo) a cada troca aceita.</li>
         <li>Unidades reduzidas: massa 1, energia em ε, temperatura como kT.</li>
       </ul>
       <ul lang="en">
         <li>Lennard-Jones particles in 2D, periodic box, no cutoff.</li>
-        <li>Langevin dynamics with the BAOAB integrator, one replica per thread.</li>
+        <li>Langevin dynamics (BAOAB integrator), or velocity Verlet with the Bussi, Berendsen or Nosé-Hoover thermostats, or no thermostat; one replica per thread.</li>
         <li>Swaps between neighboring kT, alternating pairs 1-2, 3-4… and 2-3, 4-5…, as in GROMACS.</li>
         <li>Velocities rescaled by √(kT new / kT old) at every accepted swap.</li>
         <li>Reduced units: mass 1, energy in ε, temperature as kT.</li>

@@ -7,5 +7,5 @@ rotulo-inicio: Início
 rotulo-indice: Nesta página
 rotulo-topo: Voltar ao topo
 rotulo-fonte: "Texto-fonte:"
-subtitulo: Teoria, parâmetros de controle e nove testes guiados na GUI.
+subtitulo: Teoria, parâmetros de controle e dez testes guiados na GUI.
 descricao: Tutorial de Replica Exchange MD em temperatura (T-REMD) com uma GUI interativa em Julia.

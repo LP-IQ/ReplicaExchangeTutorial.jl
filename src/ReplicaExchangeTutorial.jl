@@ -11,6 +11,8 @@ using GLMakie, Random, Printf
 export remd_gui
 
 include("simulacao.jl")
+include("termostatos.jl")
+include("gr.jl")
 include("interface.jl")
 
 end

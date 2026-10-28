@@ -9,7 +9,7 @@ geti(tb) = round(Int, getf(tb))
 # exceto quando "kts" é dado explicitamente.
 const PADRAO = Dict("nrep" => "6", "kmin" => "0.55", "kmax" => "0.86", "n" => "100", "L" => "100.0",
                     "dt" => "0.05", "nsteps" => "20000", "nex" => "50", "pause" => "0", "nequil" => "2000",
-                    "gam" => "0.1", "eps" => "1.0", "sig" => "2.0", "seed" => "42")
+                    "gam" => "0.1", "eps" => "1.0", "sig" => "2.0", "seed" => "42", "termo" => "Langevin")
 const TESTES = [
     "(escolher)"          => Dict{String,String}(),
     "1: referência"       => Dict{String,String}(),
@@ -25,7 +25,14 @@ const TESTES = [
     "7b: n = 400"         => Dict("n" => "400", "L" => "200.0"),
     "8: gargalo"          => Dict("kts" => "0.55,0.58,0.61,0.80,0.83,0.86"),
     "9: faixa fria"       => Dict("kmin" => "0.35", "kmax" => "0.45", "nequil" => "5000"),
+    "10a: Bussi"          => Dict("termo" => "Bussi (v-rescale)"),
+    "10b: Berendsen"      => Dict("termo" => "Berendsen"),
+    "10c: Nosé-Hoover"    => Dict("termo" => "Nosé-Hoover"),
+    "10d: sem termostato" => Dict("termo" => "Nenhum (NVE)"),
 ]
+# nome no menu => termostato da simulação (termostatos.jl)
+const OPCOES_TERMO = ["Langevin" => :langevin, "Bussi (v-rescale)" => :bussi, "Berendsen" => :berendsen,
+                      "Nosé-Hoover" => :nosehoover, "Nenhum (NVE)" => :nve]
 
 function settext!(tb, s::String)
     tb.displayed_string[] = s; tb.stored_string[] = s
@@ -73,17 +80,22 @@ function remd_gui()   # se ainda cortar: redimensione a janela ou edite o tamanh
     colsize!(fig.layout, 3, Relative(0.24))
 
     # ---------------- controles ----------------
+    # telas baixas (1080p ou menos): controles mais compactos, para a coluna caber na janela
+    compacto = vidmode.height < 1200
+    fs = compacto ? 12.0 : 13.5                 # fonte dos rótulos
+    ht, hm, hb = compacto ? (21, 22, 24) : (25, 27, 29)   # alturas: caixa de texto, menu, botão
+    gap = compacto ? 2 : 4
     row = Ref(0)
     function field(label, default)
         row[] += 1
-        Label(left[row[], 1], label; halign=:right, fontsize=13.5)
-        return Textbox(left[row[], 2]; stored_string=default, width=125, height=25, fontsize=13.5, textpadding=(7, 7, 3, 3))
+        Label(left[row[], 1], label; halign=:right, fontsize=fs)
+        return Textbox(left[row[], 2]; stored_string=default, width=125, height=ht, fontsize=fs, textpadding=(7, 7, 3, 3))
     end
     tb_nrep = field("réplicas (máx $MAXREP)", "6")
     tb_kmin = field("kT mín (em epsilon)", "0.55")
     tb_kmax = field("kT máx (em epsilon)", "0.86")
     row[] += 1
-    btn_ladder = Button(left[row[], 1:2]; label="Gerar escada geométrica", height=27, fontsize=13.5)
+    btn_ladder = Button(left[row[], 1:2]; label="Gerar escada geométrica", height=hm, fontsize=fs)
     tb_kts = field("kTs", "0.550,0.601,0.658,0.719,0.786,0.860")
     tb_n = field("n partículas", "100")
     tb_L = field("L (caixa)", "100.0")
@@ -92,25 +104,31 @@ function remd_gui()   # se ainda cortar: redimensione a janela ou edite o tamanh
     tb_nex = field("troca a cada (passos)", "50")
     tb_pause = field("pausa se trocou (s)", "0.3")
     tb_nequil = field("equilibração", "2000")
-    tb_gam = field("gamma (atrito)", "0.1")
+    tb_gam = field("gamma (1/τ do termostato)", "0.1")
+    row[] += 1
+    Label(left[row[], 1], "termostato"; halign=:right, fontsize=fs)
+    menu_termo = Menu(left[row[], 2]; options=first.(OPCOES_TERMO), default="Langevin", height=hm, fontsize=fs, width=145)
     tb_eps = field("epsilon (poço LJ)", "1.0")
     tb_sig = field("sigma (diâmetro LJ)", "2.0")
     tb_seed = field("semente (0 = aleatória)", "0")
     row[] += 1
-    Label(left[row[], 1], "Teste"; halign=:right, fontsize=13.5)
-    menu_teste = Menu(left[row[], 2]; options=first.(TESTES), default="(escolher)", height=27, fontsize=13.5, width=145)
+    Label(left[row[], 1], "Teste"; halign=:right, fontsize=fs)
+    menu_teste = Menu(left[row[], 2]; options=first.(TESTES), default="(escolher)", height=hm, fontsize=fs, width=145)
     row[] += 1
-    Label(left[row[], 1], "Cores"; halign=:right, fontsize=13.5)
-    menu_cores = Menu(left[row[], 2]; options=["Destaque", "Colorido"], default="Destaque", height=27, fontsize=13.5, width=145)
+    Label(left[row[], 1], "Cores"; halign=:right, fontsize=fs)
+    menu_cores = Menu(left[row[], 2]; options=["Destaque", "Colorido"], default="Destaque", height=hm, fontsize=fs, width=145)
     row[] += 1
-    Label(left[row[], 1], "Mapa"; halign=:right, fontsize=13.5)
-    menu_map = Menu(left[row[], 2]; options=["Ocupação", "Menor energia", "Taxa de troca (kT)", "Trocas entre walkers"], default="Ocupação", height=27, fontsize=13.5, width=145)
+    Label(left[row[], 1], "Mapa"; halign=:right, fontsize=fs)
+    menu_map = Menu(left[row[], 2]; options=["Ocupação", "Menor energia", "Taxa de troca (kT)", "Trocas entre walkers"], default="Ocupação", height=hm, fontsize=fs, width=145)
     row[] += 1
-    Label(left[row[], 1], "menor U no random walk"; halign=:right, fontsize=13.5)
+    Label(left[row[], 1], "Gráfico"; halign=:right, fontsize=fs)
+    menu_graf = Menu(left[row[], 2]; options=["P(U)", "g(r)", "kT instantâneo"], default="P(U)", height=hm, fontsize=fs, width=145)
+    row[] += 1
+    Label(left[row[], 1], "menor U no random walk"; halign=:right, fontsize=fs)
     tg_min = Toggle(left[row[], 2]; active=false, halign=:left)
     row[] += 1
     bl = left[row[], 1:2] = GridLayout()
-    bk = (; height=29, fontsize=13.5)
+    bk = (; height=hb, fontsize=fs)
     btn_min = Button(bl[1, 1:3]; label="1. Minimizar + Equilibrar", buttoncolor=RGBf(0.55, 0.80, 0.55), bk...)
     btn_run = Button(bl[2, 1]; label="2. Run", buttoncolor=RGBf(1.0, 0.85, 0.2), bk...)
     btn_stop = Button(bl[2, 2]; label="Stop", buttoncolor=RGBf(0.9, 0.45, 0.45), bk...)
@@ -120,8 +138,8 @@ function remd_gui()   # se ainda cortar: redimensione a janela ou edite o tamanh
     rowgap!(bl, 4); colgap!(bl, 4)
     row[] += 1
     stats = Observable("Taxa de troca: —")
-    Label(left[row[], 1:2], stats; halign=:left, valign=:top, justification=:left, tellwidth=false, tellheight=false, fontsize=12.5)   # última linha absorve a sobra
-    rowgap!(left, 4)
+    Label(left[row[], 1:2], stats; halign=:left, valign=:top, justification=:left, tellwidth=false, tellheight=false, fontsize=fs - 1)   # última linha absorve a sobra
+    rowgap!(left, gap)
 
     # ---------------- centro: random walk, energia, histogramas, réplica de referência e mapa ----------------
     ax_W = Axis(center[1, 1:2]; title="Random walk das configurações", xlabel="rodada de tentativas de troca", ylabel="índice do kT (1 = menor)")
@@ -139,6 +157,9 @@ function remd_gui()   # se ainda cortar: redimensione a janela ou edite o tamanh
     epts = [Observable(Point2f[]) for _ in 1:MAXREP]      # energia por estado (kT)
     wpts = [Observable(Point2f[]) for _ in 1:MAXREP]      # random walk por walker
     hpts = [Observable(Point2f[]) for _ in 1:MAXREP]      # histograma por estado (kT)
+    gpts = [Observable(Point2f[]) for _ in 1:MAXREP]      # g(r) por estado (kT), no mesmo painel do P(U)
+    kpts = [Observable(Point2f[]) for _ in 1:MAXREP]      # histograma do kT instantâneo por estado
+    kteo = [Observable(Point2f[]) for _ in 1:MAXREP]      # distribuição canônica esperada (tracejada)
     tcols = [Observable(tempcolor(k, MAXREP)) for k in 1:MAXREP]   # cor do estado k
     lw_e = [Observable(k == 1 ? 2.8 : 1.2) for k in 1:MAXREP]
     line_cols = [Observable(RGBf(0, 0, 0)) for _ in 1:MAXREP]
@@ -148,7 +169,16 @@ function remd_gui()   # se ainda cortar: redimensione a janela ou edite o tamanh
         lines!(ax_E, epts[k]; color=tcols[k], linewidth=lw_e[k])   # menor kT desenhado por último (fica por cima)
         lines!(ax_W, wpts[k]; color=line_cols[k], linewidth=lw_lines[k], alpha=alpha_W)
         lines!(ax_H, hpts[k]; color=tcols[k], linewidth=lw_e[k])
+        lines!(ax_H, gpts[k]; color=tcols[k], linewidth=lw_e[k])
+        lines!(ax_H, kpts[k]; color=tcols[k], linewidth=lw_e[k])
+        lines!(ax_H, kteo[k]; color=tcols[k], linewidth=1.2, linestyle=:dash)
     end
+    # referências da g(r): g = 1 (gás ideal) e o mínimo do LJ, r = 2^(1/6) sigma
+    # desenhadas como segmentos, vazios fora do modo g(r); hlines!/vlines! com lista vazia
+    # quebram o cálculo dos limites do eixo
+    ref_g1 = Observable(Point2f[]); ref_rmin = Observable(Point2f[])
+    lines!(ax_H, ref_g1; color=:gray50, linestyle=:dash, linewidth=1)
+    lines!(ax_H, ref_rmin; color=:gray50, linestyle=:dot, linewidth=1.5)
 
     # rastreio da configuração de menor U: em qual kT ela está a cada tentativa de troca (pontos magenta, opcionais)
     minpts = Observable(Point2f[])
@@ -185,27 +215,76 @@ function remd_gui()   # se ainda cortar: redimensione a janela ou edite o tamanh
     xrng = MersenneTwister(1234)
     current_colors = Observable(PALETTES["Destaque"])
     Uh = [Float64[] for _ in 1:MAXREP]     # amostras de U por estado (para P(U))
+    Th = [Float64[] for _ in 1:MAXREP]     # amostras do kT instantâneo (2K/nf) por estado
     occ_count = zeros(Int, MAXREP, MAXREP)  # [estado, walker]: nº de registros
     swap_count = zeros(Int, MAXREP, MAXREP) # [walker a, walker b]: trocas aceitas entre os dois
     minU_count = zeros(Int, MAXREP, MAXREP) # [estado, walker]: nº de registros em que a menor U estava ali
     # frames do estado de menor kT durante o REMD: (passo, walker, U, x, y)
     traj = Tuple{Int,Int,Float64,Vector{Float32},Vector{Float32}}[]
     map_mode = Ref("Ocupação")
+    graf_mode = Ref("P(U)")
+    gr_hist = [HistGR(10.0, 0.05) for _ in 1:MAXREP]   # recriadas no reset! com rmax = min(5 sigma, L/2)
     Usm = fill(NaN, MAXREP)                 # média móvel exponencial de U por estado (só para o gráfico)
     rt_stage = zeros(Int, MAXREP)          # 0: ainda não tocou o menor kT; 1: a caminho do maior kT; 2: voltando ao menor kT
     rt_count = zeros(Int, MAXREP)          # round trips (menor kT -> maior kT -> menor kT) por walker
 
     mean_or_nan(v) = isempty(v) ? NaN : sum(v) / length(v)
 
-    function update_hist()
-        s = sim[]; R = length(s.reps)
-        isempty(Uh[1]) && return
+    # faixa comum aos histogramas de todos os estados
+    function faixa(amostras, R)
         lo = Inf; hi = -Inf
         for k in 1:R
-            isempty(Uh[k]) && continue
-            lo = min(lo, minimum(Uh[k])); hi = max(hi, maximum(Uh[k]))
+            isempty(amostras[k]) && continue
+            lo = min(lo, minimum(amostras[k])); hi = max(hi, maximum(amostras[k]))
         end
-        hi - lo < 1e-9 && return
+        return lo, hi
+    end
+
+    # painel P(U), g(r) ou kT instantâneo: só o modo escolhido tem pontos; os outros ficam vazios
+    function update_hist()
+        s = sim[]; s === nothing && return
+        R = length(s.reps); modo = graf_mode[]
+        for k in 1:MAXREP
+            modo == "P(U)" || (hpts[k][] = Point2f[])
+            modo == "g(r)" || (gpts[k][] = Point2f[])
+            if modo != "kT instantâneo"
+                kpts[k][] = Point2f[]; kteo[k][] = Point2f[]
+            end
+        end
+        modo == "g(r)" || (ref_g1[] = Point2f[]; ref_rmin[] = Point2f[])
+        if modo == "kT instantâneo"
+            nf = graus_liberdade(length(s.reps[1].x), s.termostato)
+            ax_H.title = @sprintf("kT instantâneo = 2K/nf (tracejado: canônico)\nmédia: %.3f no menor kT (alvo %.3f), %.3f no maior (alvo %.3f)",
+                                  mean_or_nan(Th[1]), s.kTs[1], mean_or_nan(Th[R]), s.kTs[R])
+            ax_H.xlabel = "kT instantâneo (unidades de epsilon)"; ax_H.ylabel = "P"
+            lo, hi = faixa(Th, R)
+            hi - lo < 1e-9 && return nothing
+            xs = range(lo, hi; length=150)
+            for k in 1:R
+                kpts[k][] = hist_points(Th[k], lo, hi, 28)
+                kteo[k][] = [Point2f(x, kT_inst_teorico(x, s.kTs[k], nf)) for x in xs]
+            end
+            autolimits!(ax_H)
+            return nothing
+        end
+        if modo == "g(r)"
+            for k in 1:MAXREP
+                gpts[k][] = k <= R ? gr_pontos(gr_hist[k], length(s.reps[k].x), s.L) : Point2f[]
+            end
+            rmin = 2^(1 / 6) * s.sig
+            rmax = length(gr_hist[1].counts) * gr_hist[1].dr
+            gmax = maximum((p[2] for k in 1:R for p in gpts[k][]); init=1.0)
+            ref_g1[] = [Point2f(0, 1), Point2f(rmax, 1)]
+            ref_rmin[] = [Point2f(rmin, 0), Point2f(rmin, gmax)]
+            ax_H.title = @sprintf("g(r) por réplica (azul = menor kT)\npontilhado: mínimo do LJ, r = %.2f; tracejado: g = 1", 2^(1 / 6) * s.sig)
+            ax_H.xlabel = "r (mesma unidade de L)"; ax_H.ylabel = "g(r)"
+            gr_hist[1].nframes > 0 && autolimits!(ax_H)
+            return nothing
+        end
+        ax_H.title = "P(U) por réplica (azul = menor kT, vermelho = maior kT)"
+        ax_H.xlabel = "U (unidades de epsilon)"; ax_H.ylabel = "P(U)"
+        lo, hi = faixa(Uh, R)
+        hi - lo < 1e-9 && return nothing
         for k in 1:R
             hpts[k][] = hist_points(Uh[k], lo, hi, 28)
         end
@@ -326,6 +405,8 @@ function remd_gui()   # se ainda cortar: redimensione a janela ou edite o tamanh
             push!(v, Point2f(s.step, Usm[k])); trim!(v, 4000)
             if collect
                 push!(Uh[k], s.reps[k].U); trim!(Uh[k], 20000)
+                acumula_gr!(gr_hist[k], s.reps[k], s.L)     # g(r) do estado k (kT fixo), a cada 10 passos
+                push!(Th[k], kT_inst(s.reps[k], s.termostato)); trim!(Th[k], 20000)
             end
         end
         if collect
@@ -358,7 +439,8 @@ function remd_gui()   # se ainda cortar: redimensione a janela ou edite o tamanh
     function clear_series!()
         for k in 1:MAXREP
             pts[k][] = Point2f[]; epts[k][] = Point2f[]; wpts[k][] = Point2f[]; hpts[k][] = Point2f[]
-            empty!(Uh[k])
+            empty!(Uh[k]); empty!(Th[k]); gpts[k][] = Point2f[]; kpts[k][] = Point2f[]; kteo[k][] = Point2f[]
+            zera!(gr_hist[k])
         end
         minpts[] = Point2f[]; empty!(traj); fill!(occ_count, 0); fill!(swap_count, 0); fill!(minU_count, 0); fill!(rt_stage, 0); fill!(rt_count, 0); fill!(lastflag, ""); fill!(Usm, NaN)
         return nothing
@@ -371,8 +453,14 @@ function remd_gui()   # se ainda cortar: redimensione a janela ou edite o tamanh
         R > MAXREP && error("máximo de $MAXREP réplicas")
         L = getf(tb_L); seed = geti(tb_seed)
         seed <= 0 && (seed = rand(1:10^6))
-        sim[] = new_sim(v, geti(tb_n), L, getf(tb_eps), getf(tb_sig), getf(tb_dt), getf(tb_gam); seed)
+        nome_termo = something(menu_termo.selection[], "Langevin")
+        termostato = Dict(OPCOES_TERMO)[nome_termo]
+        sim[] = new_sim(v, geti(tb_n), L, getf(tb_eps), getf(tb_sig), getf(tb_dt), getf(tb_gam); seed, termostato)
         Random.seed!(xrng, seed + 99)
+        rmax = min(5 * getf(tb_sig), L / 2)              # até ~5 diâmetros, sem passar de L/2
+        for k in 1:MAXREP
+            gr_hist[k] = HistGR(rmax, 0.05)
+        end
         clear_series!()
         if length(axs) != R
             for ax in axs
@@ -402,7 +490,7 @@ function remd_gui()   # se ainda cortar: redimensione a janela ou edite o tamanh
         stats[] = "Taxa de troca: —"
         record_walk()
         update_plots()
-        logtext[] = "Reset: $R réplicas criadas (semente $seed). Clique em '1. Minimizar + Equilibrar'."
+        logtext[] = "Reset: $R réplicas criadas (semente $seed, termostato $nome_termo). Clique em '1. Minimizar + Equilibrar'."
         return nothing
     end
 
@@ -429,7 +517,7 @@ function remd_gui()   # se ainda cortar: redimensione a janela ou edite o tamanh
         s.step = 0
         minpts[] = Point2f[]; empty!(traj); fill!(occ_count, 0); fill!(swap_count, 0); fill!(minU_count, 0); fill!(rt_stage, 0); fill!(rt_count, 0)
         for k in 1:MAXREP
-            wpts[k][] = Point2f[]
+            wpts[k][] = Point2f[]; zera!(gr_hist[k])
         end
         record_walk()
         update_plots()
@@ -509,6 +597,7 @@ function remd_gui()   # se ainda cortar: redimensione a janela ou edite o tamanh
                         ("nequil", tb_nequil), ("gam", tb_gam), ("eps", tb_eps), ("sig", tb_sig), ("seed", tb_seed))
             settext!(tb, v[k])
         end
+        menu_termo.i_selected[] = findfirst(==(v["termo"]), first.(OPCOES_TERMO))   # vale no botão 1 / Reset
         if haskey(v, "kts")
             settext!(tb_kts, v["kts"])
         else
@@ -526,6 +615,11 @@ function remd_gui()   # se ainda cortar: redimensione a janela ou edite o tamanh
         sel === nothing && return
         map_mode[] = sel
         sim[] === nothing || update_occ()
+    end
+    on(menu_graf.selection) do sel
+        sel === nothing && return
+        graf_mode[] = sel
+        update_hist()
     end
     on(btn_ladder.clicks) do _
         try
@@ -591,7 +685,12 @@ function remd_gui()   # se ainda cortar: redimensione a janela ou edite o tamanh
             save(joinpath(dir, "janela_completa.png"), img)
             crop_save(joinpath(dir, "random_walk.png"), img, [ax_W])
             crop_save(joinpath(dir, "energia.png"), img, [ax_E])
-            crop_save(joinpath(dir, "P_U.png"), img, [ax_H])
+            oldg = graf_mode[]                                  # os três gráficos do painel, seja qual for o escolhido
+            for (mode, tag) in (("P(U)", "P_U"), ("g(r)", "g_r"), ("kT instantâneo", "kT_instantaneo"))
+                graf_mode[] = mode; update_hist()
+                crop_save(joinpath(dir, tag * ".png"), GLMakie.Makie.colorbuffer(fig), [ax_H])
+            end
+            graf_mode[] = oldg; update_hist()
             crop_save(joinpath(dir, "replica_referencia.png"), img, [ax_main])
             crop_save(joinpath(dir, "replicas.png"), img, axs)
             old = map_mode[]                                   # um PNG para cada opção do seletor "Mapa"

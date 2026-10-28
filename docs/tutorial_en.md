@@ -188,7 +188,7 @@ Each replica follows **Langevin dynamics**, integrated with the BAOAB scheme:
 m\,\ddot{x} = F(x) - \gamma\, m\, \dot{x} + \sqrt{2\,\gamma\, m\, kT}\;\eta(t)
 ```
 
-The friction term (γ) and the random noise (η) together act as a thermostat: they keep the replica in the canonical ensemble of its temperature. The friction is the GUI field "gamma (atrito)" (gamma, friction).
+The friction term (γ) and the random noise (η) together act as a thermostat: they keep the replica in the canonical ensemble of its temperature. The friction is the GUI field "gamma (1/τ do termostato)" (gamma, 1/τ of the thermostat). Langevin is the default thermostat; the GUI also offers Bussi, Berendsen, Nosé-Hoover and no thermostat (NVE), discussed in section 8.3.
 
 Replicas are independent between one exchange attempt and the next, and the GUI propagates them in parallel, one per thread.
 
@@ -290,7 +290,7 @@ The window has three columns: controls on the left, plots in the center and repl
 | troca a cada (passos) (exchange every, steps) | 50 | Dynamics steps between two rounds of exchange attempts |
 | pausa se trocou (s) (pause on swap) | 0.3 | Time the screen freezes when a swap is accepted (display only) |
 | equilibração (equilibration) | 2000 | Steps without swaps run by button 1 |
-| gamma (atrito) (friction) | 0.1 | Friction coefficient of the Langevin thermostat |
+| gamma (1/τ do termostato) (1/τ of the thermostat) | 0.1 | For Langevin, the friction coefficient. For the other thermostats, the inverse of the coupling time τ |
 | epsilon (poço LJ) (LJ well) | 1.0 | Depth of the Lennard-Jones well |
 | sigma (diâmetro LJ) (LJ diameter) | 2.0 | Particle diameter |
 | semente (0 = aleatória) (seed, 0 = random) | 0 | Random number seed |
@@ -301,7 +301,7 @@ The window has three columns: controls on the left, plots in the center and repl
 
 | Field changed | Takes effect |
 | --- | --- |
-| kTs, n, L, epsilon, sigma, seed | Only after clicking Reset or button 1 (the system is rebuilt) |
+| kTs, n, L, epsilon, sigma, seed, thermostat | Only after clicking Reset or button 1 (the system is rebuilt) |
 | dt, gamma, nsteps, exchange interval, pause | At the next click on Run |
 | equilibration | At the next click on button 1 |
 
@@ -309,9 +309,11 @@ The window has three columns: controls on the left, plots in the center and repl
 
 | Control | Options | Function |
 | --- | --- | --- |
-| Teste (Test) | "1: referência" to "9: faixa fria" | Fills the fields with the settings of a test from section 9 |
+| termostato (thermostat) | "Langevin" / "Bussi (v-rescale)" / "Berendsen" / "Nosé-Hoover" / "Nenhum (NVE)" (none) | How each replica is kept at its temperature (section 8.3) |
+| Teste (Test) | "1: referência" to "10d: sem termostato" | Fills the fields with the settings of a test from section 9 |
 | Cores (Colors) | "Destaque" (Highlight) / "Colorido" (Colorful) | How walkers are painted (section 6.4) |
 | Mapa (Map) | "Ocupação" (Occupancy) / "Menor energia" (Lowest energy) / "Taxa de troca (kT)" (Exchange rate) / "Trocas entre walkers" (Swaps between walkers) | Which map appears in the lower right panel of the center column (section 6.3) |
+| Gráfico (Plot) | "P(U)" / "g(r)" / "kT instantâneo" (instantaneous kT) | What appears in the middle right panel (section 6.3) |
 | menor U no random walk (lowest U in the random walk) | on / off | Shows, in the random walk, which kT held the lowest-energy configuration; with the switch on, the walker lines are drawn lighter so these points stand out |
 
 **Buttons**
@@ -358,7 +360,11 @@ One of the panels has a **thick magenta frame**: it is the state that holds, at 
 - The curves of the two ends of the ladder are thicker.
 - The title shows the mean U at the lowest and at the highest kT.
 
-**P(U) por réplica** (P(U) per replica, middle right). One potential energy histogram per state, with the same colors. It is accumulated only during Run. It shows directly the overlap that controls the exchange rate.
+**P(U), g(r) or kT instantâneo** (instantaneous kT, middle right). The "Gráfico" (Plot) menu chooses what is shown. In all three cases there is one curve per state, with the same colors, accumulated only during Run.
+
+- **P(U)**: the potential energy histogram. It shows directly the overlap that controls the exchange rate.
+- **g(r)**: the radial distribution function, the probability of finding a particle at distance r from another, relative to an ideal gas of the same density. g(r) = 1 is the dashed line; the dotted line marks the potential minimum, r = 2^(1/6) σ. High peaks indicate clusters. This is the structural observable of the GUI.
+- **kT instantâneo**: the histogram of 2K/n_f, the temperature computed from the kinetic energy K, with n_f degrees of freedom. The dashed curves are the distribution expected in the canonical ensemble. Use it to judge the thermostat (section 8.3).
 
 **Réplica de referência** (reference replica, bottom left). A larger view of the lowest-kT state. The title says which walker is there and its energy.
 
@@ -533,9 +539,9 @@ REMD adds a caveat: **the dt limit is set by the hottest replica**, where partic
 
 Observed: dt = 0.05 was stable up to kT = 0.86. Above that, check.
 
-#### gamma (friction)
+#### gamma (1/τ of the thermostat)
 
-The friction coefficient of the Langevin thermostat. The temperature relaxation time is of the order of 1/gamma.
+For Langevin, the friction coefficient. The temperature relaxation time is of the order of 1/gamma. For the other thermostats, gamma sets the coupling time τ = 1/gamma.
 
 | gamma | Behavior |
 | --- | --- |
@@ -544,6 +550,28 @@ The friction coefficient of the Langevin thermostat. The temperature relaxation 
 | Large (1 or more) | The temperature adjusts quickly, but motion becomes diffusive and the system explores space more slowly |
 
 In REMD, gamma controls how much each replica decorrelates between two exchange attempts. There is no need to re-equilibrate after an accepted swap: since the criterion satisfies detailed balance and the velocities are rescaled, the configuration received is already a valid sample of the new kT. With gamma too large, motion becomes diffusive, the configuration changes little between attempts and the same pair tends to swap and swap back.
+
+#### The thermostat
+
+The exchange criterion of section 3 assumes that **each replica samples the canonical ensemble** of its temperature. The choice of thermostat decides whether that is true.
+
+| Thermostat | How it works | Canonical ensemble? |
+| --- | --- | --- |
+| Langevin (default) | Friction and random noise on each particle (BAOAB integrator) | Yes |
+| Bussi (v-rescale) | Rescales all velocities by a random factor chosen so that the kinetic energy has the canonical distribution (Bussi, Donadio and Parrinello, 2007). It is GROMACS `v-rescale` | Yes |
+| Berendsen | Rescales velocities to bring the kinetic energy toward the target: v → λv, with λ² = 1 + (dt/τ)(kT/kT_inst − 1) (Berendsen et al., 1984) | **No**: kinetic energy fluctuations are smaller than canonical ones, and potential energy fluctuations are affected too |
+| Nosé-Hoover | An extra variable (here, a chain of three) acts as a friction that changes sign with the temperature (Martyna, Klein and Tuckerman, 1992) | Yes, if the dynamics is ergodic. The chain exists because a single thermostat may not be ergodic in small systems |
+| None (NVE) | Newtonian dynamics only (velocity Verlet) | No: the total energy stays constant and the temperature drifts |
+
+With Berendsen, the energy distributions are not the canonical ones, and the exchange criterion, which assumes them, is no longer exact. Rosta, Buchete and Hummer (2009) describe the artifacts this causes in REMD. The recommendation in the literature is to use in REMD only thermostats that produce the canonical ensemble.
+
+Implementation details:
+
+- Langevin uses the BAOAB integrator; the others use velocity Verlet plus the thermostat step.
+- For the thermostats other than Langevin, the total momentum starts at zero and is conserved; that is why n_f = 2n − 2 instead of 2n.
+- In Nosé-Hoover, the chain variables stay with the state (the temperature), not with the configuration. At a swap, only the particle velocities are rescaled.
+
+To compare thermostats, use the "kT instantâneo" plot (section 6.3) and test 10.
 
 ### 8.4 Exchange frequency
 
@@ -620,8 +648,13 @@ A table to record the results:
 - P(U): how much do neighboring histograms overlap?
 - "Ocupação" map: are the cells close to 1/6 ≈ 0.17?
 - "Taxa de troca (kT)" map: which pair has the lowest rate?
+- "g(r)" plot: at which kT do peaks above g = 1 appear near the potential minimum (r ≈ 2.24)?
 
 **Observed** (one run of 20 000 steps): exchange rate from 0.63 to 0.80, with the lowest value in the coldest pair; 45 round trips; occupancy between 0.11 and 0.26, around the ideal 0.17.
+
+**g(r)** (same code and seed 42, run outside the window): one peak at r ≈ 2.2, at the potential minimum, with g ≈ 6.7 at the lowest kT and ≈ 3.4 at the highest. Only at the lowest kT do weak secondary peaks appear (g ≈ 1.3 to 1.4) between r ≈ 3.8 and 5, and beyond r ≈ 7 all curves sit at g ≈ 1. In a dilute system, the height of the first peak is close to the Boltzmann factor of the well: g(r_min) ≈ exp(ε/kT), which gives 6.2 at kT = 0.55 and 3.2 at kT = 0.86. In other words, in this range the particles mostly form pairs and small groups, not large clusters.
+
+![g(r) in test 1](figs/teste1_g_r.png)
 
 ![P(U) with 6 replicas](figs/teste1_P_U.png)
 
@@ -776,6 +809,8 @@ The initial prediction was good mixing with a top that is too cold. The result w
 - No round trips. Occupancy and swaps between walkers form two blocks: walkers 1 and 2 stay at the two coldest temperatures, and walkers 3 to 6 at the four hottest.
 - The cold P(U) are wide and have several peaks, because the energy is drifting.
 
+**g(r)** (same code and seed 42, run outside the window): at kT = 0.35, the first peak reaches g ≈ 40, followed by peaks at r ≈ 4.4 (g ≈ 11) and 6.2 (g ≈ 6), distances of a close-packed arrangement; up to r = 10 the curve does not return to 1, because the clusters are larger than the g(r) window. At kT = 0.45, the first peak is g ≈ 11 and the rest of the curve stays close to 1. The g(r) shows the condensation directly: compare it with test 1, where the highest peak was 6.7.
+
 ![Window at the end of test 9](figs/teste9_janela.png)
 
 | Replica panels | Energy |
@@ -796,9 +831,41 @@ The initial prediction was good mixing with a top that is too cold. The result w
 
 **The original prediction** (good mixing with a top that is too cold) would require a range entirely below the transition, where all replicas have clusters. In that region equilibration is slow, and the result depends strongly on the run length. The idea still holds in general: exchange rate and round trips tell you whether configurations travel along the ladder, but not whether the maximum temperature crosses the barrier that matters.
 
+### Test 10: the thermostat
+
+**Goal**: see that not every thermostat produces the canonical ensemble, and that the exchange rate does not reveal it.
+
+**Settings**: the ladder of test 1, changing only the thermostat. In the Teste menu: "10a: Bussi", "10b: Berendsen", "10c: Nosé-Hoover" and "10d: sem termostato" (no thermostat). Compare with test 1 (Langevin). The thermostat only takes effect at button 1, which rebuilds the system.
+
+**What to look at**
+- "kT instantâneo" plot: do the solid curves (measured) follow the dashed ones (canonical)? The title gives the mean at the lowest and at the highest kT.
+- Exchange rate per pair and P(U), compared with test 1.
+
+**Observed** (same code as the GUI, run outside the window: seed 42, equilibration 2000, 20 000 steps)
+
+| Thermostat | Exchange rate per pair | Mean kT (lowest / highest; target 0.550 / 0.860) | Width of the instantaneous kT ÷ canonical width |
+| --- | --- | --- | --- |
+| Langevin | 0.59 / 0.64 / 0.70 / 0.79 / 0.81 | 0.551 / 0.860 | 1.00 to 1.06 |
+| Bussi | 0.64 / 0.65 / 0.77 / 0.82 / 0.80 | 0.549 / 0.873 | 0.95 to 0.99 |
+| Nosé-Hoover | 0.71 / 0.68 / 0.71 / 0.78 / 0.83 | 0.549 / 0.866 | 0.90 to 0.98 |
+| **Berendsen** | 0.56 / 0.65 / 0.77 / 0.77 / 0.80 | 0.555 / 0.854 | **0.25 to 0.41** |
+| No thermostat (NVE) | 0.71 / 0.74 / 0.80 / 0.79 / 0.84 | 0.555 / 0.861 | 0.76 to 1.14 |
+
+- With Berendsen, the instantaneous kT histogram has between a quarter and two fifths of the canonical width, and it gets narrower the hotter the replica. The mean, however, is on target.
+- Without a thermostat, the mean is also on target, because at every accepted swap the velocities are rescaled to the kT of the state, which acts as a crude thermostat. The widths are what come out wrong: narrow in the cold replicas and wide in the hot ones.
+- Exchange rates vary between thermostats, but within what changes between two seeds. The g(r) curves are also similar.
+
+![Instantaneous kT with Berendsen: measured histograms (solid) much narrower than the canonical ones (dashed)](figs/teste10b_kT_instantaneo.png)
+
+In the GUI, the numbers should be the same or very close; check them.
+
+**Interpretation**: in this dilute system, Berendsen and NVE barely change the exchange rate, so the problem goes unnoticed in the mixing indicators. Even so, the energy distributions are not the canonical ones, and the exchange criterion, which assumes the canonical ensemble, is no longer exact. In systems with real barriers, such as peptides and proteins, the error shows up in the populations of the states (Rosta, Buchete and Hummer, 2009).
+
+**Conclusion**: in REMD, use a canonical thermostat (Langevin, Bussi or Nosé-Hoover). To check, look at the kinetic energy distribution, not just the mean temperature.
+
 ## 10. Diagnosis: from symptom to parameter
 
-The tables below link each symptom to the parameter that should be changed. The suggested order is: preparation, replica mixing, and maximum temperature.
+The tables below link each symptom to the parameter that should be changed. The suggested order is: preparation, replica mixing, maximum temperature and, finally, the thermostat.
 
 **Step 1: is the preparation correct?**
 
@@ -827,6 +894,13 @@ The tables below link each symptom to the parameter that should be changed. The 
 | Good mixing, but the reference replica does not change | Highest-kT panel with persistent clusters | kT máx too low | Raise kT máx (and replicas, to keep the rate) |
 | Energy of a hot panel blows up | Panel title; energy plot | dt too large for the hot replica | Reduce dt |
 
+**Step 4: is the ensemble of each replica canonical?**
+
+| Symptom | Where it shows | Likely cause | What to change |
+| --- | --- | --- | --- |
+| Instantaneous kT histogram narrower than the dashed curve | "kT instantâneo" plot (test 10) | Thermostat that does not produce the canonical ensemble (Berendsen) | Switch to Langevin, Bussi or Nosé-Hoover |
+| Mean instantaneous kT far from the target | Title of the "kT instantâneo" plot | No thermostat (NVE), or τ = 1/gamma too long for the run length | Use a thermostat; increase gamma |
+
 ## 11. From the GUI to a molecular simulation
 
 The GUI parameters have direct counterparts in molecular dynamics packages. The table uses GROMACS as an example.
@@ -836,7 +910,8 @@ The GUI parameters have direct counterparts in molecular dynamics packages. The 
 | kTs | Temperature of each replica | A different `ref-t` in the `.mdp` of each directory |
 | troca a cada (passos) | Interval between attempts | `mdrun -replex N` |
 | Running replicas in parallel | One simulation per replica, synchronized | `mpirun -np R gmx_mpi mdrun -multidir …` |
-| gamma (friction) | Thermostat coupling | `tau-t` (with the `sd` integrator, the friction is 1/`tau-t`) |
+| gamma (1/τ of the thermostat) | Thermostat coupling | `tau-t` (with the `sd` integrator, the friction is 1/`tau-t`) |
+| termostato | Thermostat algorithm | `integrator = sd` (Langevin) or `tcoupl = v-rescale` (Bussi), `nose-hoover` or `berendsen` |
 | equilibration | Equilibrate each replica at its temperature before swaps | NVT/NPT per replica |
 | n particles | Total number of atoms, **including the solvent** | — |
 | Random walk of the walkers | Replica indices over time | "Repl ex" lines in the log; the `demux.pl` script (in the `scripts/` directory of the source code) with `gmx trjcat -demux` |
@@ -871,6 +946,8 @@ containing:
 | `random_walk.png` | Random walk of the configurations |
 | `energia.png` | Potential energy per replica |
 | `P_U.png` | P(U) histograms |
+| `g_r.png` | g(r) per state |
+| `kT_instantaneo.png` | Instantaneous kT distribution, with the canonical one dashed |
 | `replica_referencia.png` | Reference replica |
 | `replicas.png` | All replica panels |
 | `mapa_ocupacao.png` | Occupancy map |
@@ -879,7 +956,7 @@ containing:
 | `mapa_trocas_walkers.png` | Swaps between walkers map |
 | `janela_completa.png` | The whole window |
 
-The four maps are saved regardless of which one is selected. The resolution is that of the window; maximize it before saving to get larger figures.
+The four maps and the three plots of the P(U) panel are saved regardless of which one is selected. The resolution is that of the window; maximize it before saving to get larger figures.
 
 ### 12.2 Trajectory
 
@@ -921,7 +998,7 @@ Reset or a new equilibration clears the accumulated frames. The limit is 50 000 
 ## 14. Limitations of the model
 
 - **It is a teaching model.** A dilute 2D Lennard-Jones gas does not have barriers as high as those of a biomolecule, and the sampling gain from REMD is smaller than in real systems.
-- **The GUI shows the mechanics of the method, not the final gain.** The panels diagnose how configurations travel along the ladder. The current version has no structural observable comparing the reference replica with and without swaps.
+- **The GUI shows the mechanics of the method more than the final gain.** The panels diagnose how configurations travel along the ladder. The only structural observable is g(r); to see the gain from REMD, compare the g(r) of the lowest kT with and without swaps (for example, with "troca a cada" larger than nsteps).
 - **O(n²) cost.** With no cutoff and no neighbor list, systems with more than a few hundred particles become slow.
 - **Short statistics.** Runs of 20 000 steps give a few hundred attempts per pair. Exchange rates have an uncertainty of a few hundredths, and the per-walker maps are even noisier. Small differences between runs may be just fluctuation; repeat with another seed before drawing conclusions.
 - **T-REMD only.** Variants such as REST2 and Hamiltonian REMD are not implemented.
@@ -945,6 +1022,9 @@ Reset or a new equilibration clears the accumulated frames. The limit is 50 000 
 | Bottleneck | A pair of states with a very low exchange rate, which splits the ladder |
 | Detailed balance | At equilibrium, each transition happens as often as its reverse; this is what guarantees that the exchange criterion preserves the ensemble of each state |
 | Quasi-ergodicity | When the simulation is trapped in one region and does not sample the full ensemble |
+| g(r) | Radial distribution function: density of particles at distance r from a particle, divided by the mean density |
+| Instantaneous kT | 2K/n_f, the temperature computed from the kinetic energy at one instant; it fluctuates around the kT of the state |
+| Canonical thermostat | An algorithm that controls the temperature and produces the canonical ensemble (Langevin, Bussi, Nosé-Hoover); Berendsen is not one of them |
 | Demultiplexing | Rebuilding the continuous trajectory of each walker from the per-state trajectories |
 | REST2 | A variant in which only the solute interactions are scaled, reducing the number of replicas |
 
@@ -966,6 +1046,13 @@ Reset or a new equilibration clears the accumulated frames. The limit is 50 000 
 
 **Variants**
 - Wang, L.; Friesner, R. A.; Berne, B. J. Replica exchange with solute scaling: a more efficient version of replica exchange with solute tempering (REST2). *J. Phys. Chem. B* **115**, 9431 (2011). doi:10.1021/jp204407d
+
+**Thermostats**
+- Berendsen, H. J. C.; Postma, J. P. M.; van Gunsteren, W. F.; DiNola, A.; Haak, J. R. Molecular dynamics with coupling to an external bath. *J. Chem. Phys.* **81**, 3684 (1984). doi:10.1063/1.448118
+- Bussi, G.; Donadio, D.; Parrinello, M. Canonical sampling through velocity rescaling. *J. Chem. Phys.* **126**, 014101 (2007). doi:10.1063/1.2408420
+- Martyna, G. J.; Klein, M. L.; Tuckerman, M. Nosé–Hoover chains: the canonical ensemble via continuous dynamics. *J. Chem. Phys.* **97**, 2635 (1992). doi:10.1063/1.463940
+- Martyna, G. J.; Tuckerman, M. E.; Tobias, D. J.; Klein, M. L. Explicit reversible integrators for extended systems dynamics. *Mol. Phys.* **87**, 1117 (1996). doi:10.1080/00268979600100761
+- Rosta, E.; Buchete, N.-V.; Hummer, G. Thermostat artifacts in replica exchange molecular dynamics simulations. *J. Chem. Theory Comput.* **5**, 1393 (2009). doi:10.1021/ct800557h
 
 **Integrator**
 - Leimkuhler, B.; Matthews, C. Rational construction of stochastic numerical methods for molecular sampling. *Appl. Math. Res. eXpress* **2013**, 34–56 (2013). doi:10.1093/amrx/abs010

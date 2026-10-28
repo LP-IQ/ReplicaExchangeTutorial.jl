@@ -1,4 +1,5 @@
 # Núcleo da simulação: fluido de Lennard-Jones 2D, Langevin BAOAB e trocas T-REMD.
+# Os outros termostatos estão em termostatos.jl.
 # Não depende da janela; é o que os testes em test/runtests.jl exercitam.
 # Unidades reduzidas: massa = 1, energia em unidades de epsilon, temperatura como kT.
 
@@ -30,6 +31,8 @@ Base.@kwdef mutable struct Sim
     acc::Vector{Int} = Int[]              # trocas aceitas por par
     last_prob::Vector{Float64} = Float64[]  # P da última tentativa de cada par (NaN = nunca tentado)
     rngs::Vector{MersenneTwister} = MersenneTwister[]
+    termostato::Symbol = :langevin         # um de TERMOSTATOS (termostatos.jl)
+    vxi::Matrix{Float64} = zeros(0, 0)     # Nosé-Hoover: velocidades da cadeia, uma coluna por estado
     prepared::Bool = false
 end
 
@@ -99,7 +102,11 @@ end
 # entre trocas as réplicas são independentes -> uma por thread
 function step_all!(s::Sim)
     Threads.@threads for i in eachindex(s.reps)
-        langevin_step!(s.reps[i], s.kTs[i], s.dt, s.gam, s.L, s.eps, s.sig, s.rngs[i])
+        if s.termostato == :langevin
+            langevin_step!(s.reps[i], s.kTs[i], s.dt, s.gam, s.L, s.eps, s.sig, s.rngs[i])
+        else
+            passo_vv!(s, i)
+        end
     end
     s.step += 1
     return nothing
@@ -131,7 +138,8 @@ function attempt_exchange!(s::Sim, rng)
 end
 
 # mesma configuração inicial em todas; walker w começa no estado w
-function new_sim(kTs, n, L, eps, sig, dt, gam; seed=rand(1:10^6))
+function new_sim(kTs, n, L, eps, sig, dt, gam; seed=rand(1:10^6), termostato=:langevin)
+    termostato in TERMOSTATOS || error("termostato desconhecido: $termostato")
     R = length(kTs); rng = MersenneTwister(seed)
     x0 = L .* rand(rng, n); y0 = L .* rand(rng, n)
     reps = Replica[]
@@ -140,7 +148,8 @@ function new_sim(kTs, n, L, eps, sig, dt, gam; seed=rand(1:10^6))
     end
     return Sim(; reps, kTs=collect(Float64, kTs), L, eps, sig, dt, gam,
                att=zeros(Int, R - 1), acc=zeros(Int, R - 1), last_prob=fill(NaN, R - 1),
-               rngs=[MersenneTwister(seed + 17 * i) for i in 1:R])
+               rngs=[MersenneTwister(seed + 17 * i) for i in 1:R],
+               termostato, vxi=zeros(NCADEIA, R))
 end
 
 # Minimiza uma configuração e copia para todas as réplicas
@@ -153,8 +162,12 @@ function prepare!(s::Sim)
         # velocidades de Maxwell-Boltzmann (m = 1)
         r.vx .= sqrt(kT) .* randn(s.rngs[i], length(r.x))
         r.vy .= sqrt(kT) .* randn(s.rngs[i], length(r.x))
+        if s.termostato != :langevin           # momento total zero: 2n - 2 graus de liberdade
+            r.vx .-= sum(r.vx) / length(r.vx); r.vy .-= sum(r.vy) / length(r.vy)
+        end
         forces!(r, s.L, s.eps, s.sig)
     end
+    fill!(s.vxi, 0.0)
     s.prepared = true
     return nothing
 end

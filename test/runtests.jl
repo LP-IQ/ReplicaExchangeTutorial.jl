@@ -1,6 +1,7 @@
 using ReplicaExchangeTutorial, Test, Random
 using ReplicaExchangeTutorial: Replica, new_sim, prepare!, step_all!, attempt_exchange!,
-                               forces!, langevin_step!
+                               forces!, langevin_step!, HistGR, acumula_gr!, gr_pontos,
+                               energia_cinetica, graus_liberdade, kT_inst_teorico
 
 # escada geométrica, como o botão da GUI
 escada(a, b, R) = [a * (b / a)^((i - 1) / (R - 1)) for i in 1:R]
@@ -67,4 +68,69 @@ end
     s.reps[1].U = -10.0; s.reps[2].U = 0.0
     (_, _, P), = attempt_exchange!(s, MersenneTwister(1))
     @test P ≈ exp((1 / 0.5 - 1 / 1.0) * (-10.0))
+end
+
+@testset "g(r) em 2D" begin
+    # partículas sem correlação: g(r) = 1 em todas as distâncias
+    n = 100; L = 100.0; rng = MersenneTwister(5)
+    h = HistGR(10.0, 0.05)
+    r = Replica(n, 1)
+    for _ in 1:400
+        r.x .= L .* rand(rng, n); r.y .= L .* rand(rng, n)
+        acumula_gr!(h, r, L)
+    end
+    pts = gr_pontos(h, n, L)
+    g = [p[2] for p in pts if p[1] > 1]
+    @test sum(g) / length(g) ≈ 1 rtol=0.02
+    # um par a 3,0 de distância, atravessando a borda periódica: um único bin preenchido
+    h2 = HistGR(10.0, 0.05); r2 = Replica(2, 1)
+    r2.x .= [0.5, L - 2.5]; r2.y .= [10.0, 10.0]
+    acumula_gr!(h2, r2, L)
+    @test sum(h2.counts) == 1
+    @test findfirst(>(0), h2.counts) == floor(Int, 3.0 / 0.05) + 1
+    @test length(HistGR(60.0, 0.05).counts) * 0.05 <= 60.0
+end
+
+# um estado só (kT = 0,7), n = 40 numa caixa 40 x 40: denso o bastante para haver colisões
+function corrida_termostato(termostato; nsteps=60_000, kT=0.7)
+    s = new_sim([kT], 40, 40.0, 1.0, 2.0, 0.01, 1.0; seed=3, termostato)   # τ = 1/gamma = 1
+    prepare!(s)
+    r = s.reps[1]
+    Ks = Float64[]
+    for passo in 1:nsteps
+        step_all!(s)
+        passo > nsteps ÷ 5 && passo % 5 == 0 && push!(Ks, energia_cinetica(s.reps[1]))
+    end
+    nf = graus_liberdade(40, termostato)
+    media = sum(Ks) / length(Ks)
+    desvio = sqrt(sum(abs2, Ks .- media) / length(Ks))
+    return 2 * media / nf, desvio / media, sqrt(2 / nf)   # <kT inst>, desvio relativo de K, valor canônico
+end
+
+@testset "termostatos" begin
+    for t in (:langevin, :bussi, :nosehoover)
+        kTm, rel, rel_canonico = corrida_termostato(t)
+        @test kTm ≈ 0.7 rtol=0.05
+        @test rel ≈ rel_canonico rtol=0.15            # flutuações de K do ensemble canônico
+    end
+    kTm, rel, rel_canonico = corrida_termostato(:berendsen)
+    @test kTm ≈ 0.7 rtol=0.05
+    @test rel < 0.5 * rel_canonico                    # Berendsen: flutuações pequenas demais
+
+    # NVE: energia total e momento total conservados (velocity Verlet)
+    s = new_sim([0.7], 40, 40.0, 1.0, 2.0, 0.01, 1.0; seed=3, termostato=:nve)
+    prepare!(s)
+    r = s.reps[1]
+    E1 = r.U + energia_cinetica(r)
+    for _ in 1:20_000
+        step_all!(s)
+    end
+    r = s.reps[1]
+    @test abs(r.U + energia_cinetica(r) - E1) < 0.005 * 40
+    @test abs(sum(r.vx)) < 1e-8 && abs(sum(r.vy)) < 1e-8
+
+    # a distribuição canônica do kT instantâneo integra a 1
+    dT = 1e-3
+    @test sum(kT_inst_teorico(T, 0.7, 78) for T in dT:dT:3.0) * dT ≈ 1 rtol=1e-3
+    @test_throws ErrorException new_sim([0.7], 10, 20.0, 1.0, 2.0, 0.01, 1.0; termostato=:andersen)
 end

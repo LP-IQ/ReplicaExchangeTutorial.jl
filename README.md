@@ -14,12 +14,14 @@ A ferramenta do tutorial é uma interface gráfica interativa em Julia (`remd_gu
 
 | Arquivo | O que é |
 | --- | --- |
-| [docs/tutorial.md](docs/tutorial.md) | O tutorial completo: teoria, instalação, visita guiada à GUI, nove testes passo a passo, diagnóstico e relação com simulações moleculares |
+| [docs/tutorial.md](docs/tutorial.md) | O tutorial completo: teoria, instalação, visita guiada à GUI, dez testes passo a passo, diagnóstico e relação com simulações moleculares |
 | [docs/tutorial_en.md](docs/tutorial_en.md) | O mesmo tutorial em inglês |
 | `site/` | Página do projeto (GitHub Pages), gerada a partir dos tutoriais por `site/build.sh` |
 | `src/simulacao.jl` | Núcleo da simulação: Lennard-Jones 2D, Langevin e critério de troca |
+| `src/termostatos.jl` | Bussi, Berendsen, Nosé-Hoover e NVE (velocity Verlet) |
+| `src/gr.jl` | Função de distribuição radial g(r) em 2D |
 | `src/interface.jl` | A GUI usada nos testes |
-| `test/runtests.jl` | Testes do núcleo (forças, termostato, critério de troca) |
+| `test/runtests.jl` | Testes do núcleo (forças, termostatos, critério de troca, g(r)) |
 | `remd_gui.jl` | Abre a GUI a partir do repositório clonado |
 | `run_windows.bat` | Atalho para abrir a GUI no Windows a partir do repositório |
 
@@ -43,6 +45,8 @@ A ferramenta do tutorial é uma interface gráfica interativa em Julia (`remd_gu
 | Mapa: menor energia | Em que kT está a configuração de menor U |
 | Mapa: taxa de troca (kT) | Trocas aceitas / tentadas por par de kT vizinhos |
 | Mapa: trocas entre walkers | Há grupos de configurações isolados? |
+| Gráfico: g(r) | Que estrutura cada temperatura amostra? |
+| Gráfico: kT instantâneo | O termostato gera as flutuações do ensemble canônico? |
 
 ## Instalação
 
@@ -105,7 +109,7 @@ Sequência básica:
 
 - Partículas de Lennard-Jones em 2D, caixa quadrada periódica, sem raio de corte (todos os pares, imagem mínima).
 - Unidades reduzidas: massa 1, energia em unidades de epsilon, temperatura como kT.
-- Dinâmica de Langevin (integrador BAOAB) em cada réplica.
+- Dinâmica de Langevin (integrador BAOAB) em cada réplica, ou velocity Verlet com os termostatos de Bussi, Berendsen ou Nosé-Hoover (cadeia de 3), ou sem termostato (NVE).
 - Tentativas de troca entre kT vizinhos, alternando entre os pares (1-2, 3-4, …) e (2-3, 4-5, …), com o critério
 
 ```math
